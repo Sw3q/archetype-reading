@@ -1,0 +1,16 @@
+services:
+  # Client-only Vite/React app — built to static files and served from Render's CDN.
+  # Static sites are free on Render (no instance, no spin-down).
+  - type: web
+    name: archetype-reading
+    runtime: static
+    buildCommand: npm ci && npm run build
+    staticPublishPath: ./dist
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+    routes:
+      # Single-page app: serve index.html for any path.
+      - type: rewrite
+        source: /*
+        destination: /index.html
