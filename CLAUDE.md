@@ -55,11 +55,13 @@ ordinary kept cards.
 **Manual mapping mode** (`stage: 'mapping'`, entered from the intro's "Done in person?"
 button): an empty, editable Roundtable for transcribing a reading done with the physical
 deck. `MappingStage` (in App.tsx) owns the cards; `Roundtable`'s `editable` prop switches
-on the search-to-seat bar (`ArchetypeSearch`, Enter seats the first match), per-token ×
-remove controls (hover on desktop, tap-toggle on touch; suppressed during PNG export),
-golden-angle spiral spawn positions instead of the guided ring, and **no card cap** (a
-gentle note appears past 12). The AI prompt switches to in-person framing
-(`buildPrompt`'s `manual` flag) and omits all journey/shadow-reclaim language.
+on the search-to-seat bar (`ArchetypeSearch`, Enter seats the first match) and per-card ×
+remove controls (hover on desktop, tap-toggle on touch; suppressed during PNG export).
+New cards drop into the first uncrowded slot scanning outer orbits inward (`findFreeSlot`);
+there is **no card cap** (a gentle note appears past 12). The orbit/stack/alliance model
+(above) is shared with the guided flow — the only differences are seat editability and the
+in-person AI-prompt framing (`buildPrompt`'s `manual` flag, which omits all journey/
+shadow-reclaim language).
 
 **One swipe primitive, reused.** `SwipeStack` is a generic binary-swipe component
 (configurable `left`/`right` `SwipeSide`s) used by *both* Stage 1 and Stage 2. Because of
@@ -77,25 +79,34 @@ done; `<8` → `RescuePhase`, where the seeker can pull dropped cards back up to
 proceed with fewer). A round that keeps everything is flagged `noProgress` and nudges the
 user to be stricter.
 
-**Roundtable positioning** (`Roundtable.tsx`): the draggable surface is a rounded
-**square** (`overflow-hidden`), not a circle — the concentric rings only *depict* a round
-table. This is deliberate: a circular clip would cut off wide tokens and corner-dragged
-tokens. Long archetype names wrap (`max-w-[130px]`) so they fit near the edges. Initial
-token positions are percentages from `initialLayout()`, clamped to 22–78% so nothing
-starts clipped. Drag is constrained to the table via `dragConstraints={tableRef}`. Export
-captures **only** `tableRef` (`lib/exportImage.ts` → html-to-image `toPng`), so anything
-rendered outside that node — the heading, the Start over / Export buttons — is excluded
-from the image by construction.
+**Roundtable model** (`Roundtable.tsx`): the table is a rounded **square**
+(`overflow-hidden`) whose meaning is made **explicit and discrete** rather than inferred
+from free pixels — this is the structural heart of the feature, used identically by the
+guided flow and manual mapping. The geometry is polar around a fixed **`You` seal** at the
+bottom (`YOU = {x:50, y:86}` in table-%). Three discrete structures:
+- **Orbits**: four concentric arcs (`RINGS`, ring 0 = innermost/strongest identification →
+  ring 3 = outer rim). On `onDragEnd`, `settleSeat()` snaps the seat to the nearest ring
+  and a free angle `phi` along it (clamped to that ring's `max` so tokens stay on-table).
+- **Stacks**: dropping a seat *inside* another merges it beneath (the target stays primary —
+  `cards[0]`). Tapping a non-primary card promotes it. A stack is one seat (one
+  `[data-token-id]`, N `[data-card-id]`), modeling "derivatives that fuel the top card".
+- **Alliances**: releasing a seat *near but not on* another snaps it beside (same ring) and
+  records an undirected edge in `edges`; a gold diamond marks the midpoint. Settling onto an
+  orbit elsewhere dissolves the seat's alliances.
 
-**AI prompt export** ("Copy AI prompt" on the roundtable): because drag state lives in
-framer-motion rather than React state, `readTable()` measures the live DOM boxes
-(`[data-token-id]`, `[data-you]`) to compute each card's distance-from-You and allied
-clusters (connected components of tokens whose edge-to-edge gap < 4% of table width —
-edge gap, not center distance, so wide side-by-side tokens still count). `lib/buildPrompt.ts`
-turns that plus the deck's light/shadow lines into a Jungian-analyst session prompt on the
-clipboard. Cards reclaimed in the Shadow stage are flagged in the prompt (and only there):
-App.tsx tracks `reclaimedIds` and passes them to `Roundtable` — they remain visually
-indistinguishable in the UI.
+State is real React state (`seats`, `edges`) — not framer-motion internals — so there is no
+DOM measurement at prompt time. Drag uses a controlled `x`/`y` motion value that is **zeroed
+in `onDragEnd`** once the snapped `ring`/`phi` is committed (else the offset double-applies).
+Export captures **only** `tableRef` (`lib/exportImage.ts` → html-to-image `toPng`); the
+controls live outside it and are excluded by construction.
+
+**AI prompt export** ("Copy AI prompt"): `buildPrompt` (`lib/buildPrompt.ts`) renders the
+`seats`/`edges` directly — cards grouped by orbit (ring 1–4), stacks listing primary + the
+derivatives beneath, and alliances as connected components of the edge list — each with the
+deck's light/shadow lines, as a Jungian-analyst session prompt on the clipboard. No vector
+math or tier estimation: the structure *is* the data. Cards reclaimed in the Shadow stage
+are flagged (guided mode only); manual mode passes `manual:true` for in-person framing that
+omits all journey/shadow language.
 
 ## Data pipeline
 

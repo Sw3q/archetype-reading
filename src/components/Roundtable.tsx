@@ -1,10 +1,10 @@
-import { useMemo, useRef, useState } from 'react'
-import { motion } from 'framer-motion'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { motion, useMotionValue } from 'framer-motion'
 import type { Archetype } from '../types'
 import { ARCHETYPES } from '../data/archetypes'
 import { FAMILY_COLOR } from '../lib/family'
 import { exportNodeAsPng } from '../lib/exportImage'
-import { buildPrompt, type SeatedCard } from '../lib/buildPrompt'
+import { buildPrompt, type PromptStack } from '../lib/buildPrompt'
 import { OrnamentRule } from './StageLayout'
 
 interface RoundtableProps {
@@ -20,100 +20,116 @@ interface RoundtableProps {
   }
 }
 
-/** Tokens whose boxes sit within this gap (fraction of table width) are "allied". */
-const CLUSTER_GAP = 0.04
+/* ------------------------------------------------------------------ *
+ * Polar geometry: four orbits around the You seal at the table bottom.
+ * All units are percentages of the table's width/height.
+ * ------------------------------------------------------------------ */
 
-interface Box {
-  cx: number
-  cy: number
-  l: number
-  t: number
-  r: number
-  b: number
+const YOU = { x: 50, y: 86 }
+/** Orbit radius + max angle (radians, measured from straight-up) that keeps
+ * a token inside the table bounds on that orbit. */
+const RINGS = [
+  { r: 14, max: 0.78 },
+  { r: 28, max: 1.21 },
+  { r: 42, max: 1.08 },
+  { r: 56, max: 0.72 },
+]
+/** Released boxes whose edge gap is within this many table-% units ally. */
+const ALLY_GAP = 4.5
+
+function ringPos(ring: number, phi: number): { left: number; top: number } {
+  const { r } = RINGS[ring]
+  return { left: YOU.x + r * Math.sin(phi), top: YOU.y - r * Math.cos(phi) }
 }
 
-/** Shortest edge-to-edge distance between two boxes (0 when overlapping). */
-function boxGap(a: Box, b: Box): number {
-  const dx = Math.max(0, Math.max(a.l, b.l) - Math.min(a.r, b.r))
-  const dy = Math.max(0, Math.max(a.t, b.t) - Math.min(a.b, b.b))
-  return Math.hypot(dx, dy)
+const clampPhi = (ring: number, phi: number) =>
+  Math.max(-RINGS[ring].max, Math.min(RINGS[ring].max, phi))
+
+/** A seat on the table: one card, or a stack (cards[0] = primary/top). */
+interface Seat {
+  id: string
+  cards: string[]
+  ring: number
+  phi: number
 }
 
-/** Read live token/You positions from the DOM (drag state lives in framer-motion,
- * not React state, so the rendered boxes are the source of truth). */
-function readTable(table: HTMLDivElement, cards: Archetype[]) {
-  const rect = table.getBoundingClientRect()
-  const norm = (r: DOMRect): Box => ({
-    cx: (r.left + r.width / 2 - rect.left) / rect.width,
-    cy: (r.top + r.height / 2 - rect.top) / rect.height,
-    l: (r.left - rect.left) / rect.width,
-    t: (r.top - rect.top) / rect.height,
-    r: (r.right - rect.left) / rect.width,
-    b: (r.bottom - rect.top) / rect.height,
-  })
-  const you = norm(table.querySelector('[data-you]')!.getBoundingClientRect())
-  const boxes = new Map<string, Box>()
-  table.querySelectorAll<HTMLElement>('[data-token-id]').forEach((el) => {
-    boxes.set(el.dataset.tokenId!, norm(el.getBoundingClientRect()))
-  })
-
-  const seated: SeatedCard[] = cards.map((archetype) => {
-    const p = boxes.get(archetype.id)!
-    return { archetype, dist: Math.hypot(p.cx - you.cx, p.cy - you.cy) }
-  })
-
-  // Allied clusters = connected components of near-touching tokens.
-  const groups: Archetype[][] = []
-  const assigned = new Set<string>()
-  for (const card of cards) {
-    if (assigned.has(card.id)) continue
-    const group = [card]
-    assigned.add(card.id)
-    for (let i = 0; i < group.length; i++) {
-      const gb = boxes.get(group[i].id)!
-      for (const other of cards) {
-        if (assigned.has(other.id)) continue
-        if (boxGap(gb, boxes.get(other.id)!) <= CLUSTER_GAP) {
-          group.push(other)
-          assigned.add(other.id)
-        }
-      }
-    }
-    if (group.length > 1) groups.push(group)
+/** Even spread of n seats across the outer orbits (guided mode's start). */
+function initialSeats(cards: Archetype[]): Seat[] {
+  const seats: Seat[] = []
+  const place = (ids: string[], ring: number) => {
+    const { max } = RINGS[ring]
+    ids.forEach((id, i) => {
+      const t = ids.length === 1 ? 0.5 : i / (ids.length - 1)
+      seats.push({ id, cards: [id], ring, phi: (t * 2 - 1) * max * 0.82 })
+    })
   }
-
-  return { seated, groups }
+  const ids = cards.map((c) => c.id)
+  place(ids.slice(0, 4), 3)
+  place(ids.slice(4, 8), 2)
+  place(ids.slice(8), 1)
+  return seats
 }
 
-/** Initial token positions: spread around a circle in the upper table, so the
- * seeker drags them inward toward the "You" node at the bottom. Values are
- * percentages of the table surface. */
-function initialLayout(n: number): { left: number; top: number }[] {
-  const cx = 50
-  const cy = 40
-  const radius = 28
-  const clamp = (v: number) => Math.max(22, Math.min(78, v))
-  return Array.from({ length: n }, (_, i) => {
-    // Spread across the top ~270° arc, avoiding the bottom where "You" sits.
-    const t = n === 1 ? 0 : i / (n - 1)
-    const angle = (-215 + t * 250) * (Math.PI / 180)
+/** First uncrowded slot for a new seat, scanning outer orbits inward. */
+function findFreeSlot(seats: Seat[]): { ring: number; phi: number } {
+  for (let ring = 3; ring >= 0; ring--) {
+    const { r, max } = RINGS[ring]
+    const sep = 26 / r // ≈ one token width of angular separation
+    const taken = seats.filter((s) => s.ring === ring).map((s) => s.phi)
+    for (let k = 0; k < 24; k++) {
+      // 0, +step, -step, +2·step… fanning out from the top of the arc.
+      // Step must exceed the separation or consecutive candidates collide.
+      const phi = (k % 2 === 0 ? 1 : -1) * Math.ceil(k / 2) * (sep * 1.1)
+      if (Math.abs(phi) > max) break
+      if (taken.every((t) => Math.abs(t - phi) >= sep)) return { ring, phi }
+    }
+  }
+  return { ring: 3, phi: (Math.random() * 2 - 1) * RINGS[3].max }
+}
+
+/* ------------------------------------------------------------------ */
+
+/** Engraved table: four orbit arcs fanning out from the You seal. */
+function TableEngraving() {
+  const arc = (ring: number) => {
+    const { r, max } = RINGS[ring]
+    const x1 = YOU.x + r * Math.sin(-max)
+    const y1 = YOU.y - r * Math.cos(-max)
+    const x2 = YOU.x + r * Math.sin(max)
+    const y2 = YOU.y - r * Math.cos(max)
+    return `M ${x1} ${y1} A ${r} ${r} 0 0 1 ${x2} ${y2}`
+  }
+  // Tick marks along the outer arc.
+  const ticks = Array.from({ length: 13 }, (_, i) => {
+    const phi = -RINGS[3].max + (i / 12) * 2 * RINGS[3].max
+    const r1 = RINGS[3].r + 2.2
+    const r2 = RINGS[3].r + (i % 3 === 0 ? 4.4 : 3.2)
     return {
-      left: clamp(cx + radius * Math.cos(angle)),
-      top: clamp(cy + radius * Math.sin(angle)),
+      x1: YOU.x + r1 * Math.sin(phi),
+      y1: YOU.y - r1 * Math.cos(phi),
+      x2: YOU.x + r2 * Math.sin(phi),
+      y2: YOU.y - r2 * Math.cos(phi),
     }
   })
-}
-
-/** Spawn point for the i-th card added in mapping mode: a golden-angle spiral
- * out from the table's center, so successive adds never stack exactly. */
-function spawnPosition(i: number): { left: number; top: number } {
-  const clamp = (v: number) => Math.max(22, Math.min(78, v))
-  const angle = i * 2.39996 // golden angle
-  const radius = 8 + 7 * Math.sqrt(i)
-  return {
-    left: clamp(50 + radius * Math.cos(angle)),
-    top: clamp(40 + radius * Math.sin(angle) * 0.8),
-  }
+  return (
+    <svg viewBox="0 0 100 100" className="absolute inset-0 h-full w-full" aria-hidden>
+      <g fill="none" stroke="#c9a35a">
+        <path d={arc(0)} strokeWidth="0.25" opacity="0.4" />
+        <path d={arc(1)} strokeWidth="0.25" opacity="0.32" />
+        <path d={arc(2)} strokeWidth="0.25" opacity="0.26" strokeDasharray="0.4 1.6" />
+        <path d={arc(3)} strokeWidth="0.25" opacity="0.32" />
+        {ticks.map((t, i) => (
+          <line key={i} {...t} strokeWidth="0.25" opacity="0.4" />
+        ))}
+        {/* Eight-pointed star in the upper void */}
+        <path
+          d="M50 10 L51.4 14.6 L56 16 L51.4 17.4 L50 22 L48.6 17.4 L44 16 L48.6 14.6 Z"
+          strokeWidth="0.3"
+          opacity="0.35"
+        />
+      </g>
+    </svg>
+  )
 }
 
 /** Search-to-seat field for mapping mode. Enter seats the first match. */
@@ -185,38 +201,7 @@ function ArchetypeSearch({
   )
 }
 
-/** Engraved table: concentric gold rings, dotted orbit, tick marks, center star. */
-function TableEngraving() {
-  const ticks = Array.from({ length: 24 }, (_, i) => {
-    const a = (i / 24) * Math.PI * 2
-    const r1 = 45.5
-    const r2 = i % 6 === 0 ? 43 : 44.3
-    return {
-      x1: 50 + r1 * Math.cos(a),
-      y1: 40 + r1 * Math.sin(a),
-      x2: 50 + r2 * Math.cos(a),
-      y2: 40 + r2 * Math.sin(a),
-    }
-  })
-  return (
-    <svg viewBox="0 0 100 100" className="absolute inset-0 h-full w-full" aria-hidden>
-      <g fill="none" stroke="#c9a35a">
-        <circle cx="50" cy="40" r="46" strokeWidth="0.25" opacity="0.4" />
-        {ticks.map((t, i) => (
-          <line key={i} {...t} strokeWidth="0.25" opacity="0.45" />
-        ))}
-        <circle cx="50" cy="40" r="38" strokeWidth="0.2" opacity="0.28" />
-        <circle cx="50" cy="40" r="29" strokeWidth="0.2" opacity="0.2" strokeDasharray="0.4 2.2" />
-        <circle cx="50" cy="40" r="17" strokeWidth="0.2" opacity="0.16" />
-        <path
-          d="M50 33.5 L51.6 38.4 L56.5 40 L51.6 41.6 L50 46.5 L48.4 41.6 L43.5 40 L48.4 38.4 Z"
-          strokeWidth="0.3"
-          opacity="0.4"
-        />
-      </g>
-    </svg>
-  )
-}
+/* ------------------------------------------------------------------ */
 
 export function Roundtable({
   cards,
@@ -225,24 +210,132 @@ export function Roundtable({
   editable,
 }: RoundtableProps) {
   const tableRef = useRef<HTMLDivElement>(null)
+  const seatEls = useRef(new Map<string, HTMLElement>())
   const [exporting, setExporting] = useState(false)
   const [done, setDone] = useState(false)
   const [copied, setCopied] = useState(false)
 
-  // Per-card spawn positions. Guided mode seeds the full ring up front;
-  // mapping mode assigns a spiral spot to each card as it is added (and
-  // remembers it, so a removed-then-re-added card returns where it spawned).
-  const positionsRef = useRef(new Map<string, { left: number; top: number }>())
-  const spawnCount = useRef(0)
-  if (!editable && positionsRef.current.size === 0 && cards.length > 0) {
-    const ring = initialLayout(cards.length)
-    cards.forEach((c, i) => positionsRef.current.set(c.id, ring[i]))
-  }
-  cards.forEach((c) => {
-    if (!positionsRef.current.has(c.id)) {
-      positionsRef.current.set(c.id, spawnPosition(spawnCount.current++))
+  const byId = useMemo(() => new Map(ARCHETYPES.map((a) => [a.id, a])), [])
+  const [seats, setSeats] = useState<Seat[]>(() => (editable ? [] : initialSeats(cards)))
+  /** Alliance edges between seat ids. */
+  const [edges, setEdges] = useState<Array<[string, string]>>([])
+
+  // Reconcile seats with the cards prop (mapping mode adds/removes cards).
+  useEffect(() => {
+    const ids = new Set(cards.map((c) => c.id))
+    setSeats((prev) => {
+      let next = prev
+        .map((s) => ({ ...s, cards: s.cards.filter((id) => ids.has(id)) }))
+        .filter((s) => s.cards.length > 0)
+      const seated = new Set(next.flatMap((s) => s.cards))
+      for (const c of cards) {
+        if (!seated.has(c.id)) {
+          next = [...next, { id: c.id, cards: [c.id], ...findFreeSlot(next) }]
+        }
+      }
+      const alive = new Set(next.map((s) => s.id))
+      setEdges((e) => e.filter(([a, b]) => alive.has(a) && alive.has(b)))
+      return next
+    })
+  }, [cards])
+
+  /** Commit a seat's release: stack onto a target, ally with a neighbor, or
+   * settle onto the nearest orbit. */
+  function settleSeat(seatId: string, pointer: { x: number; y: number }) {
+    const table = tableRef.current
+    if (!table) return
+    const rect = table.getBoundingClientRect()
+    const toUnits = (r: DOMRect) => ({
+      l: ((r.left - rect.left) / rect.width) * 100,
+      t: ((r.top - rect.top) / rect.height) * 100,
+      r: ((r.right - rect.left) / rect.width) * 100,
+      b: ((r.bottom - rect.top) / rect.height) * 100,
+      w: (r.width / rect.width) * 100,
+    })
+    const px = ((pointer.x - rect.left) / rect.width) * 100
+    const py = ((pointer.y - rect.top) / rect.height) * 100
+
+    const dragged = seats.find((s) => s.id === seatId)
+    if (!dragged) return
+    const draggedBox = seatEls.current.get(seatId)
+      ? toUnits(seatEls.current.get(seatId)!.getBoundingClientRect())
+      : null
+
+    // 1. Pointer released inside another seat → stack beneath it.
+    for (const other of seats) {
+      if (other.id === seatId) continue
+      const el = seatEls.current.get(other.id)
+      if (!el) continue
+      const b = toUnits(el.getBoundingClientRect())
+      if (px >= b.l && px <= b.r && py >= b.t && py <= b.b) {
+        setSeats((prev) =>
+          prev
+            .filter((s) => s.id !== seatId)
+            .map((s) =>
+              s.id === other.id ? { ...s, cards: [...s.cards, ...dragged.cards] } : s,
+            ),
+        )
+        setEdges((e) => e.filter(([a, b2]) => a !== seatId && b2 !== seatId))
+        return
+      }
     }
-  })
+
+    // 2. Released near another seat → snap beside it and record the alliance.
+    if (draggedBox) {
+      let nearest: { id: string; gap: number; box: ReturnType<typeof toUnits> } | null =
+        null
+      for (const other of seats) {
+        if (other.id === seatId) continue
+        const el = seatEls.current.get(other.id)
+        if (!el) continue
+        const b = toUnits(el.getBoundingClientRect())
+        const dx = Math.max(0, Math.max(draggedBox.l, b.l) - Math.min(draggedBox.r, b.r))
+        const dy = Math.max(0, Math.max(draggedBox.t, b.t) - Math.min(draggedBox.b, b.b))
+        const gap = Math.hypot(dx, dy)
+        if (gap <= ALLY_GAP && (!nearest || gap < nearest.gap)) {
+          nearest = { id: other.id, gap, box: b }
+        }
+      }
+      if (nearest) {
+        const partner = seats.find((s) => s.id === nearest!.id)!
+        const { r, max } = RINGS[partner.ring]
+        const dPhi = (nearest.box.w / 2 + draggedBox.w / 2 + 1.5) / r
+        // Snap to the pointer's side, but flip if that side has no room left
+        // on the arc (so an allied card never gets crushed against the edge).
+        let side = px >= (nearest.box.l + nearest.box.r) / 2 ? 1 : -1
+        if (Math.abs(partner.phi + side * dPhi) > max) side = -side
+        const phi = clampPhi(partner.ring, partner.phi + side * dPhi)
+        setSeats((prev) =>
+          prev.map((s) => (s.id === seatId ? { ...s, ring: partner.ring, phi } : s)),
+        )
+        setEdges((e) => [
+          ...e.filter(([a, b2]) => a !== seatId && b2 !== seatId),
+          [seatId, nearest.id],
+        ])
+        return
+      }
+    }
+
+    // 3. Settle onto the orbit nearest the release point; alliances dissolve.
+    const dist = Math.hypot(px - YOU.x, py - YOU.y)
+    let ring = 0
+    for (let i = 1; i < RINGS.length; i++) {
+      if (Math.abs(dist - RINGS[i].r) < Math.abs(dist - RINGS[ring].r)) ring = i
+    }
+    const phi = clampPhi(ring, Math.atan2(px - YOU.x, YOU.y - py))
+    setSeats((prev) => prev.map((s) => (s.id === seatId ? { ...s, ring, phi } : s)))
+    setEdges((e) => e.filter(([a, b2]) => a !== seatId && b2 !== seatId))
+  }
+
+  function promote(seatId: string, cardId: string) {
+    setSeats((prev) =>
+      prev.map((s) =>
+        s.id === seatId
+          ? { ...s, cards: [cardId, ...s.cards.filter((id) => id !== cardId)] }
+          : s,
+      ),
+    )
+  }
 
   async function handleExport() {
     if (!tableRef.current) return
@@ -257,9 +350,32 @@ export function Roundtable({
   }
 
   async function handleCopyPrompt() {
-    if (!tableRef.current) return
-    const { seated, groups } = readTable(tableRef.current, cards)
-    const prompt = buildPrompt(seated, groups, new Set(reclaimedIds), {
+    const toStack = (s: Seat): PromptStack => ({
+      cards: s.cards.map((id) => byId.get(id)!),
+      ring: s.ring,
+    })
+    const stacks = seats.map(toStack)
+    // Alliance groups = connected components over the edge list.
+    const groups: PromptStack[][] = []
+    const seen = new Set<string>()
+    for (const seat of seats) {
+      if (seen.has(seat.id)) continue
+      const component = [seat.id]
+      seen.add(seat.id)
+      for (let i = 0; i < component.length; i++) {
+        for (const [a, b] of edges) {
+          const next = a === component[i] ? b : b === component[i] ? a : null
+          if (next && !seen.has(next)) {
+            component.push(next)
+            seen.add(next)
+          }
+        }
+      }
+      if (component.length > 1) {
+        groups.push(component.map((id) => toStack(seats.find((s) => s.id === id)!)))
+      }
+    }
+    const prompt = buildPrompt(stacks, groups, new Set(reclaimedIds), {
       manual: !!editable,
     })
     try {
@@ -277,6 +393,18 @@ export function Roundtable({
     setTimeout(() => setCopied(false), 2500)
   }
 
+  // Alliance midpoint markers, derived from seat positions.
+  const allianceMarks = edges
+    .map(([a, b]) => {
+      const sa = seats.find((s) => s.id === a)
+      const sb = seats.find((s) => s.id === b)
+      if (!sa || !sb) return null
+      const pa = ringPos(sa.ring, sa.phi)
+      const pb = ringPos(sb.ring, sb.phi)
+      return { key: `${a}-${b}`, left: (pa.left + pb.left) / 2, top: (pa.top + pb.top) / 2 }
+    })
+    .filter(Boolean) as { key: string; left: number; top: number }[]
+
   return (
     <div className="starfield flex h-[100dvh] flex-col items-center overflow-y-auto px-5 py-5">
       <header className="mb-3 max-w-xl shrink-0 text-center">
@@ -290,17 +418,19 @@ export function Roundtable({
         <p className="mx-auto mt-2.5 max-w-md font-body text-[15px] leading-snug text-ivory/60">
           {editable ? (
             <>
-              Recreate the table from your in-person reading: search the deck, seat
-              each archetype, then drag it into place — those you identify with most
-              <span className="text-gold-bright/90"> closest to You</span>, allied
-              cards <span className="text-gold-bright/90">near each other</span>.
+              Search the deck, then place each card on an orbit —{' '}
+              <span className="text-gold-bright/90">Ring 1, beside You, is what you are most</span>.
+              Drop a card <span className="text-gold-bright/90">onto another to stack</span>{' '}
+              derivatives (tap a name to bring it to the top); release it{' '}
+              <span className="text-gold-bright/90">touching a neighbour to ally them</span>.
             </>
           ) : (
             <>
-              Drag each archetype into place. Set the ones you identify with most
-              <span className="text-gold-bright/90"> closest to You</span>. Place archetypes
-              that are <span className="text-gold-bright/90">allied</span> — that support or
-              keep each other in check — <span className="text-gold-bright/90">near each other</span>.
+              Place each archetype on an orbit —{' '}
+              <span className="text-gold-bright/90">Ring 1, beside You, is what you are most</span>.
+              Drop a card <span className="text-gold-bright/90">onto another to stack</span>{' '}
+              derivatives (tap a name to bring it to the top); release it{' '}
+              <span className="text-gold-bright/90">touching a neighbour to ally them</span>.
             </>
           )}
         </p>
@@ -319,21 +449,10 @@ export function Roundtable({
         className="tarot-frame relative aspect-square w-[min(92vw,560px,calc(100dvh-320px))] shrink-0 overflow-hidden"
         style={{
           background:
-            'radial-gradient(circle at 50% 42%, #1a140c 0%, #120e09 52%, #0b0908 100%)',
+            'radial-gradient(circle at 50% 78%, #1a140c 0%, #120e09 52%, #0b0908 100%)',
         }}
       >
         <TableEngraving />
-
-        {/* "You" node, fixed at bottom-center */}
-        <div className="absolute bottom-[5%] left-1/2 flex -translate-x-1/2 flex-col items-center">
-          <div
-            data-you
-            className="font-display flex h-16 w-16 items-center justify-center rounded-full border border-gold/80 bg-ink/80 text-[13px] font-semibold tracking-[0.18em] text-gold-bright uppercase"
-            style={{ boxShadow: '0 0 0 3px rgba(11,9,8,0.9), 0 0 0 4px rgba(201,163,90,0.35), 0 0 30px -6px rgba(201,163,90,0.45)' }}
-          >
-            You
-          </div>
-        </div>
 
         {/* Empty-table hint (mapping mode) */}
         {editable && cards.length === 0 && (
@@ -342,14 +461,44 @@ export function Roundtable({
           </p>
         )}
 
-        {/* Draggable archetype tokens */}
-        {cards.map((card) => (
-          <Token
-            key={card.id}
-            archetype={card}
-            start={positionsRef.current.get(card.id)!}
+        {/* Alliance midpoint marks */}
+        {allianceMarks.map((m) => (
+          <span
+            key={m.key}
+            aria-hidden
+            className="pointer-events-none absolute z-0 block h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rotate-45 border border-gold/80 bg-ink"
+            style={{ left: `${m.left}%`, top: `${m.top}%` }}
+          />
+        ))}
+
+        {/* "You" seal — the origin of the four orbits */}
+        <div
+          data-you
+          className="font-display absolute flex h-16 w-16 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-gold/80 bg-ink/80 text-[13px] font-semibold tracking-[0.18em] text-gold-bright uppercase"
+          style={{
+            left: `${YOU.x}%`,
+            top: `${YOU.y}%`,
+            boxShadow:
+              '0 0 0 3px rgba(11,9,8,0.9), 0 0 0 4px rgba(201,163,90,0.35), 0 0 30px -6px rgba(201,163,90,0.45)',
+          }}
+        >
+          You
+        </div>
+
+        {/* Seats (cards & stacks) */}
+        {seats.map((seat) => (
+          <SeatToken
+            key={seat.id}
+            seat={seat}
+            byId={byId}
             constraintsRef={tableRef}
-            onRemove={editable ? () => editable.onRemove(card.id) : undefined}
+            registerEl={(el) => {
+              if (el) seatEls.current.set(seat.id, el)
+              else seatEls.current.delete(seat.id)
+            }}
+            onSettle={settleSeat}
+            onPromote={(cardId) => promote(seat.id, cardId)}
+            onRemoveCard={editable ? (cardId) => editable.onRemove(cardId) : undefined}
             hideRemove={exporting}
           />
         ))}
@@ -379,71 +528,129 @@ export function Roundtable({
   )
 }
 
-function Token({
-  archetype,
-  start,
+/* ------------------------------------------------------------------ */
+
+function SeatToken({
+  seat,
+  byId,
   constraintsRef,
-  onRemove,
+  registerEl,
+  onSettle,
+  onPromote,
+  onRemoveCard,
   hideRemove,
 }: {
-  archetype: Archetype
-  start: { left: number; top: number }
+  seat: Seat
+  byId: Map<string, Archetype>
   constraintsRef: React.RefObject<HTMLDivElement | null>
-  /** Present in mapping mode: unseat this card. */
-  onRemove?: () => void
-  /** Suppress the remove control while the table is being exported. */
+  registerEl: (el: HTMLElement | null) => void
+  onSettle: (seatId: string, pointer: { x: number; y: number }) => void
+  onPromote: (cardId: string) => void
+  /** Present in mapping mode: unseat one card. */
+  onRemoveCard?: (cardId: string) => void
+  /** Suppress the remove controls while the table is being exported. */
   hideRemove?: boolean
 }) {
-  const accent = FAMILY_COLOR[archetype.family]
+  const pos = ringPos(seat.ring, seat.phi)
   const [active, setActive] = useState(false)
-  // On touch devices there is no hover; a tap toggles the remove control.
+  // On touch devices there is no hover; a tap toggles the remove controls.
   const [tapped, setTapped] = useState(false)
+  const dragging = useRef(false)
+  // Controlled drag offset so it can be zeroed once the snapped ring/phi
+  // position is committed to state (otherwise the offset double-applies).
+  const dx = useMotionValue(0)
+  const dy = useMotionValue(0)
+
   return (
     <motion.div
-      data-token-id={archetype.id}
+      ref={registerEl}
+      data-token-id={seat.id}
       className="group draggable absolute z-10 -translate-x-1/2 -translate-y-1/2 cursor-grab active:cursor-grabbing"
-      style={{ left: `${start.left}%`, top: `${start.top}%` }}
+      style={{ left: `${pos.left}%`, top: `${pos.top}%`, x: dx, y: dy }}
       drag
       dragConstraints={constraintsRef}
       dragElastic={0.04}
       dragMomentum={false}
-      onDragStart={() => setActive(true)}
-      onDragEnd={() => setActive(false)}
-      onTap={() => onRemove && setTapped((t) => !t)}
+      onDragStart={() => {
+        dragging.current = true
+        setActive(true)
+      }}
+      onDragEnd={(_e, info) => {
+        setActive(false)
+        onSettle(seat.id, info.point)
+        dx.set(0)
+        dy.set(0)
+        // Allow the settle to re-render before treating clicks as taps again.
+        setTimeout(() => (dragging.current = false), 50)
+      }}
+      onTap={() => {
+        if (!dragging.current && onRemoveCard) setTapped((t) => !t)
+      }}
       whileDrag={{ scale: 1.08, zIndex: 30 }}
     >
-      <div
-        className="flex max-w-[130px] items-center gap-1.5 border px-2.5 py-1.5 select-none"
-        style={{
-          borderColor: active ? accent : `${accent}99`,
-          background: active ? `${accent}26` : 'rgba(13,10,8,0.88)',
-          boxShadow: '0 6px 18px -8px rgba(0,0,0,0.8)',
-        }}
-      >
-        <span
-          aria-hidden
-          className="block h-1.5 w-1.5 shrink-0 rotate-45"
-          style={{ background: accent }}
-        />
-        <span className="font-body text-center text-[12px] leading-tight font-medium text-ivory">
-          {archetype.name}
-        </span>
+      <div className="flex flex-col items-center">
+        {seat.cards.map((cardId, i) => {
+          const a = byId.get(cardId)!
+          const cardAccent = FAMILY_COLOR[a.family]
+          const isPrimary = i === 0
+          return (
+            <div
+              key={cardId}
+              data-card-id={cardId}
+              className={`relative flex items-center gap-1.5 border select-none ${
+                isPrimary ? 'z-10 max-w-[130px] px-2.5 py-1.5' : 'max-w-[120px] px-2 py-1 -mt-px'
+              }`}
+              style={{
+                borderColor: active ? cardAccent : `${cardAccent}99`,
+                background: active
+                  ? `${cardAccent}26`
+                  : isPrimary
+                    ? 'rgba(13,10,8,0.92)'
+                    : 'rgba(13,10,8,0.78)',
+                boxShadow: isPrimary ? '0 6px 18px -8px rgba(0,0,0,0.8)' : undefined,
+              }}
+            >
+              <span
+                aria-hidden
+                className={`block shrink-0 rotate-45 ${isPrimary ? 'h-1.5 w-1.5' : 'h-1 w-1'}`}
+                style={{ background: cardAccent }}
+              />
+              {isPrimary ? (
+                <span className="font-body text-center text-[12px] leading-tight font-medium text-ivory">
+                  {a.name}
+                </span>
+              ) : (
+                <button
+                  onPointerDownCapture={(e) => e.stopPropagation()}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    if (!dragging.current) onPromote(cardId)
+                  }}
+                  title="Bring to the top of the stack"
+                  className="font-body text-center text-[11px] leading-tight text-ivory/70 transition hover:text-gold-bright"
+                >
+                  {a.name}
+                </button>
+              )}
+              {onRemoveCard && !hideRemove && (
+                <button
+                  onPointerDownCapture={(e) => e.stopPropagation()}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onRemoveCard(cardId)
+                  }}
+                  aria-label={`Remove ${a.name}`}
+                  className={`absolute -top-2 -right-2 z-20 flex h-4.5 w-4.5 items-center justify-center rounded-full border border-gold/50 bg-ink text-[9px] leading-none text-ivory/80 transition hover:border-gold hover:text-gold-bright ${
+                    tapped ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                  }`}
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+          )
+        })}
       </div>
-      {onRemove && !hideRemove && (
-        <button
-          onPointerDownCapture={(e) => e.stopPropagation()}
-          onClick={(e) => {
-            e.stopPropagation()
-            onRemove()
-          }}
-          aria-label={`Remove ${archetype.name}`}
-          className={`absolute -top-2.5 -right-2.5 z-20 flex h-5 w-5 items-center justify-center rounded-full border border-gold/50 bg-ink text-[10px] leading-none text-ivory/80 transition hover:border-gold hover:text-gold-bright ${
-            tapped ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
-          }`}
-        >
-          ✕
-        </button>
-      )}
     </motion.div>
   )
 }

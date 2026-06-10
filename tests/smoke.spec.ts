@@ -59,30 +59,51 @@ test('full reading flow: intro -> swipe -> filter -> roundtable -> export', asyn
   await expect(page.getByRole('heading', { name: 'Seat your archetypes' })).toBeVisible()
   await expect(page.getByText('You', { exact: true })).toBeVisible()
 
-  // A token must be draggable: grab one and confirm it actually moves.
-  const token = page.locator('.draggable').first()
+  // A seat must be draggable: grab one and confirm it moves (snapping to an
+  // orbit). Release into the empty inner-left orbit region (relative to the
+  // You seal) so it can't accidentally stack or ally with another seat.
+  const seatCount = await page.locator('[data-token-id]').count()
+  expect(seatCount).toBe(6)
+  const you = await page.getByText('You', { exact: true }).boundingBox()
+  if (!you) throw new Error('You seal not found')
+  const token = page.locator('[data-token-id]').first()
   const before = await token.boundingBox()
   if (!before) throw new Error('no token found')
   await page.mouse.move(before.x + before.width / 2, before.y + before.height / 2)
   await page.mouse.down()
   // Move in steps so framer-motion registers a drag gesture.
-  await page.mouse.move(before.x + 80, before.y + 140, { steps: 8 })
+  await page.mouse.move(you.x - you.width * 1.6, you.y - you.height * 0.4, { steps: 8 })
   await page.mouse.up()
-  await page.waitForTimeout(100)
+  await page.waitForTimeout(200)
   const after = await token.boundingBox()
   if (!after) throw new Error('token disappeared after drag')
   expect(Math.abs(after.x - before.x) + Math.abs(after.y - before.y)).toBeGreaterThan(20)
+
+  // Stacking: drop the farthest seat onto the first → one seat fewer, two cards in it.
+  await page.waitForTimeout(200)
+  const target = await page.locator('[data-token-id]').first().boundingBox()
+  const source = await page.locator('[data-token-id]').last().boundingBox()
+  if (!target || !source) throw new Error('missing seats for stacking')
+  await page.mouse.move(source.x + source.width / 2, source.y + source.height / 2)
+  await page.mouse.down()
+  await page.mouse.move(target.x + target.width / 2, target.y + target.height / 2, { steps: 10 })
+  await page.mouse.up()
+  await page.waitForTimeout(200)
+  await expect(page.locator('[data-token-id]')).toHaveCount(5)
+  await expect(page.locator('[data-token-id]').first().locator('[data-card-id]')).toHaveCount(2)
 
   // Copy AI prompt puts the full session prompt on the clipboard
   await page.getByRole('button', { name: 'Copy AI prompt' }).click()
   await expect(page.getByRole('button', { name: 'Copied ✓' })).toBeVisible()
   const prompt = await page.evaluate(() => navigator.clipboard.readText())
   expect(prompt).toContain('Jungian depth psychoanalyst')
-  expect(prompt).toContain('My table, from closest to me to farthest:')
+  expect(prompt).toContain('four concentric orbits')
+  expect(prompt).toContain('Ring ')
+  expect(prompt).toContain('Stacked beneath it')
   expect(prompt).toContain('Light, "')
   expect(prompt).toContain('Shadow, "')
   // The two shadow-reclaimed cards from stage 2 must be flagged
-  expect(prompt.match(/Reclaimed from my shadow pass/g)?.length).toBeGreaterThanOrEqual(1)
+  expect(prompt.match(/reclaimed from my shadow pass/g)?.length).toBeGreaterThanOrEqual(1)
 
   // Export downloads a real, non-trivial PNG
   const downloadPromise = page.waitForEvent('download')
@@ -118,13 +139,29 @@ test('manual mapping: search, seat, remove, AI prompt', async ({ page }) => {
   await page.getByRole('button', { name: 'Remove Queen' }).click()
   await expect(page.locator('[data-token-id]')).toHaveCount(2)
 
-  // The AI prompt uses the in-person framing and omits journey/shadow data.
+  // Ally the two remaining seats: release one just beside (not onto) the other.
+  const anchor = await page.locator('[data-token-id="vampire"]').boundingBox()
+  const mover = await page.locator('[data-token-id="hermit"]').boundingBox()
+  if (!anchor || !mover) throw new Error('missing seats for alliance')
+  await page.mouse.move(mover.x + mover.width / 2, mover.y + mover.height / 2)
+  await page.mouse.down()
+  // Pointer lands just outside the anchor's right edge → snap-beside, not stack.
+  await page.mouse.move(anchor.x + anchor.width + 12, anchor.y + anchor.height / 2, {
+    steps: 8,
+  })
+  await page.mouse.up()
+  await page.waitForTimeout(150)
+  await expect(page.locator('[data-token-id]')).toHaveCount(2)
+
+  // The AI prompt uses the in-person framing, reports the alliance, and omits
+  // journey/shadow data.
   await page.getByRole('button', { name: 'Copy AI prompt' }).click()
   await expect(page.getByRole('button', { name: 'Copied ✓' })).toBeVisible()
   const prompt = await page.evaluate(() => navigator.clipboard.readText())
   expect(prompt).toContain('in person with the physical deck')
   expect(prompt).toContain('Vampire')
   expect(prompt).toContain('Hermit')
+  expect(prompt).toMatch(/- (Vampire \+ Hermit|Hermit \+ Vampire)/)
   expect(prompt).not.toContain('Queen')
   expect(prompt).not.toContain('shadow pass')
   expect(prompt).not.toContain('How the reading worked')

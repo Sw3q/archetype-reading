@@ -1,53 +1,80 @@
 import type { Archetype } from '../types'
 
-export interface SeatedCard {
-  archetype: Archetype
-  /** Distance from the You node, normalized by table width. */
-  dist: number
+/** One seat at the table: a card, or a stack of derivative cards. */
+export interface PromptStack {
+  /** cards[0] is the primary (top) card; the rest are stacked beneath it. */
+  cards: Archetype[]
+  /** 0 = innermost orbit (strongest identification), 3 = outer rim. */
+  ring: number
 }
 
-function tier(dist: number): string {
-  if (dist <= 0.35) return 'innermost — right beside me'
-  if (dist <= 0.55) return 'close'
-  if (dist <= 0.75) return 'mid-table'
-  return 'outer rim'
+const RING_NAMES = [
+  'Ring 1 of 4 — innermost, right beside me',
+  'Ring 2 of 4 — close',
+  'Ring 3 of 4 — middle distance',
+  'Ring 4 of 4 — the outer rim',
+]
+
+function aspectLine(a: Archetype): string {
+  return `Light, "${a.light.tag}": ${a.light.line} / Shadow, "${a.shadow.tag}": ${a.shadow.line}`
+}
+
+function stackName(s: PromptStack): string {
+  return s.cards.length > 1
+    ? `${s.cards[0].name} (stack of ${s.cards.length})`
+    : s.cards[0].name
 }
 
 /**
- * Build the AI-session prompt from the live table state. The layout is fully
- * described in text so the analyst never has to (mis)read the exported image.
+ * Build the AI-session prompt from the table's explicit structure: every seat
+ * sits on exactly one of four orbits around You, stacks declare their primary,
+ * and alliances are deliberate side-by-side snaps — nothing is inferred.
  *
  * `manual` = the table was transcribed from an in-person reading (no app
  * journey to narrate, no shadow-reclaim data).
  */
 export function buildPrompt(
-  seated: SeatedCard[],
-  clusters: Archetype[][],
+  stacks: PromptStack[],
+  alliances: PromptStack[][],
   reclaimedIds: Set<string>,
   opts: { manual?: boolean } = {},
 ): string {
   const { manual = false } = opts
-  const byCloseness = [...seated].sort((a, b) => a.dist - b.dist)
 
-  const cardLines = byCloseness
-    .map((s, i) => {
-      const a = s.archetype
-      const reclaimed =
-        !manual && reclaimedIds.has(a.id)
-          ? '\n   Reclaimed from my shadow pass — I rejected it on first instinct, then admitted it belongs to me.'
-          : ''
-      return `${i + 1}. ${a.name} (${a.family} family) — ${tier(s.dist)}${reclaimed}
-   Light, "${a.light.tag}": ${a.light.line}
-   Shadow, "${a.shadow.tag}": ${a.shadow.line}`
-    })
-    .join('\n')
+  const reclaimedNote = (a: Archetype) =>
+    !manual && reclaimedIds.has(a.id)
+      ? ' [reclaimed from my shadow pass — I rejected it on first instinct, then admitted it belongs to me]'
+      : ''
 
-  const clusterLines =
-    clusters.length > 0
-      ? clusters
-          .map((group) => `- ${group.map((a) => a.name).join(' + ')}`)
+  const ringSections = RING_NAMES.map((name, ring) => {
+    const here = stacks.filter((s) => s.ring === ring)
+    if (here.length === 0) return null
+    const entries = here
+      .map((s) => {
+        const [primary, ...beneath] = s.cards
+        let entry = `• ${primary.name} (${primary.family} family)${reclaimedNote(primary)}
+  ${aspectLine(primary)}`
+        if (beneath.length > 0) {
+          entry += `
+  Stacked beneath it — close derivatives that fuel the card on top:
+${beneath
+  .map((a) => `  · ${a.name} (${a.family})${reclaimedNote(a)} — ${aspectLine(a)}`)
+  .join('\n')}`
+        }
+        return entry
+      })
+      .join('\n')
+    return `${name}:\n${entries}`
+  })
+    .filter(Boolean)
+    .join('\n\n')
+
+  const allianceLines =
+    alliances.length > 0
+      ? alliances
+          .map((group) => `- ${group.map(stackName).join(' + ')}`)
           .join('\n')
-      : '- None — I kept every archetype standing apart.'
+      : '- None — every seat stands apart.'
 
   const opening = manual
     ? `I completed an archetype roundtable reading in person with the physical deck, and I have transcribed my final table faithfully into a digital tool so we can work with it together.
@@ -61,24 +88,24 @@ How the reading worked:
 1. I swiped through all 91 archetypes on fast instinct, keeping those I recognize in myself.
 2. I then re-examined every card I had rejected, and reclaimed the ones I had been reluctant to admit (marked below).
 3. I narrowed the keepers by holding only what is innate — what I can't help being — over what is adaptive, a skill I've merely learned.
-4. Finally I arranged the remaining archetypes consciously around a roundtable, with me ("You") seated at the bottom edge.`
+4. Finally I arranged the remaining archetypes consciously on a roundtable of four concentric orbits around my own seat.`
 
   const reflect = manual
-    ? 'what sits nearest, what is held at the rim, and which alliances look load-bearing.'
-    : 'what sits nearest, what is held at the rim, which alliances look load-bearing, and what the shadow-reclaimed cards change about the picture.'
+    ? 'which orbits carry the weight, what is held at the rim, which stacks and alliances look load-bearing.'
+    : 'which orbits carry the weight, what is held at the rim, which stacks and alliances look load-bearing, and what the shadow-reclaimed cards change about the picture.'
 
   return `You are a Jungian depth psychoanalyst who also knows Caroline Myss's "Sacred Contracts" intimately — her Gallery of Archetypes, the survival archetypes, and her light/shadow framework. ${opening}
 
-How to read my table:
-- The closer a card sits to me, the more strongly I identify with it.
-- Cards placed near each other are allied: they support each other, fuel each other, or keep each other in check.
-- Every placement was deliberate. If I attach an image of the table, treat this text as authoritative — do not re-read the cards from the image.
+How to read my table — every placement below is deliberate and exact:
+- The table has four concentric orbits around my seat. Ring 1 is right beside me (strongest identification); Ring 4 is the outer rim (held at a distance).
+- A stack is a deliberate grouping of near-derivative archetypes: the top card is the face I identify with; the cards beneath fuel it.
+- An alliance is two or more seats deliberately snapped side by side: they support each other, or keep each other in check.
+- If I attach an image of the table, treat this text as authoritative — do not re-read the cards from the image.
 
-My table, from closest to me to farthest:
-${cardLines}
+${ringSections}
 
-Allied groupings (cards I deliberately placed together):
-${clusterLines}
+Side-by-side alliances:
+${allianceLines}
 
 Before any interpretation:
 1. Briefly reflect the table back to me in your own words — what stands out structurally: ${reflect}
