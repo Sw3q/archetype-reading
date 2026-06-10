@@ -12,6 +12,7 @@ type Stage =
   | { name: 'shadow'; kept: Archetype[]; rejected: Archetype[] }
   | { name: 'filter'; kept: Archetype[] }
   | { name: 'roundtable'; final: Archetype[] }
+  | { name: 'mapping' }
   | { name: 'empty' }
 
 const TARGET = 8
@@ -68,7 +69,13 @@ export default function App() {
 
   switch (stage.name) {
     case 'intro':
-      return <Intro onBegin={begin} count={ARCHETYPES.length} />
+      return (
+        <Intro
+          onBegin={begin}
+          onMap={() => setStage({ name: 'mapping' })}
+          count={ARCHETYPES.length}
+        />
+      )
 
     case 'swipe':
       return (
@@ -128,6 +135,9 @@ export default function App() {
           onRestart={restart}
         />
       )
+
+    case 'mapping':
+      return <MappingStage onRestart={restart} />
 
     case 'empty':
       return (
@@ -191,7 +201,31 @@ const MOVEMENTS = [
   },
 ]
 
-function Intro({ onBegin, count }: { onBegin: () => void; count: number }) {
+/** Manual mapping: an empty, editable roundtable for transcribing a reading
+ * done in person with the physical deck. */
+function MappingStage({ onRestart }: { onRestart: () => void }) {
+  const [cards, setCards] = useState<Archetype[]>([])
+  return (
+    <Roundtable
+      cards={cards}
+      onRestart={onRestart}
+      editable={{
+        onAdd: (a) => setCards((c) => [...c, a]),
+        onRemove: (id) => setCards((c) => c.filter((x) => x.id !== id)),
+      }}
+    />
+  )
+}
+
+function Intro({
+  onBegin,
+  onMap,
+  count,
+}: {
+  onBegin: () => void
+  onMap: () => void
+  count: number
+}) {
   return (
     <div className="starfield relative flex min-h-[100dvh] flex-col items-center justify-center px-6 py-14">
       <div className="flex w-full max-w-4xl flex-col items-center text-center">
@@ -239,9 +273,15 @@ function Intro({ onBegin, count }: { onBegin: () => void; count: number }) {
           ))}
         </ol>
 
-        <div className="rise mt-10" style={{ animationDelay: '0.55s' }}>
+        <div
+          className="rise mt-10 flex flex-col items-center gap-3 sm:flex-row sm:gap-4"
+          style={{ animationDelay: '0.55s' }}
+        >
           <button onClick={onBegin} className="btn-gold">
             Begin the reading
+          </button>
+          <button onClick={onMap} className="btn-ghost">
+            Done in person? Map your table
           </button>
         </div>
 

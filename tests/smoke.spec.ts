@@ -97,3 +97,35 @@ test('full reading flow: intro -> swipe -> filter -> roundtable -> export', asyn
   readSync(openSync(path, 'r'), buf, 0, 8, 0)
   expect(buf.subarray(0, 4).toString('binary')).toContain('PNG')
 })
+
+test('manual mapping: search, seat, remove, AI prompt', async ({ page }) => {
+  await page.goto('/')
+  await page.getByRole('button', { name: 'Done in person? Map your table' }).click()
+  await expect(page.getByRole('heading', { name: 'Map your table' })).toBeVisible()
+
+  // Seat three archetypes via search (Enter seats the first match).
+  const search = page.getByLabel('Search archetypes')
+  for (const name of ['vampire', 'hermit', 'queen']) {
+    await search.fill(name)
+    await search.press('Enter')
+  }
+  await expect(page.locator('[data-token-id]')).toHaveCount(3)
+  // No cap: a seated count is shown.
+  await expect(page.getByText('3 seated')).toBeVisible()
+
+  // Remove one via its × control (revealed on hover).
+  await page.locator('[data-token-id="queen"]').hover()
+  await page.getByRole('button', { name: 'Remove Queen' }).click()
+  await expect(page.locator('[data-token-id]')).toHaveCount(2)
+
+  // The AI prompt uses the in-person framing and omits journey/shadow data.
+  await page.getByRole('button', { name: 'Copy AI prompt' }).click()
+  await expect(page.getByRole('button', { name: 'Copied ✓' })).toBeVisible()
+  const prompt = await page.evaluate(() => navigator.clipboard.readText())
+  expect(prompt).toContain('in person with the physical deck')
+  expect(prompt).toContain('Vampire')
+  expect(prompt).toContain('Hermit')
+  expect(prompt).not.toContain('Queen')
+  expect(prompt).not.toContain('shadow pass')
+  expect(prompt).not.toContain('How the reading worked')
+})

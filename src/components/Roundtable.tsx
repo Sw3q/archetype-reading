@@ -1,6 +1,7 @@
-import { useRef, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import type { Archetype } from '../types'
+import { ARCHETYPES } from '../data/archetypes'
 import { FAMILY_COLOR } from '../lib/family'
 import { exportNodeAsPng } from '../lib/exportImage'
 import { buildPrompt, type SeatedCard } from '../lib/buildPrompt'
@@ -11,6 +12,12 @@ interface RoundtableProps {
   /** Ids reclaimed during the Shadow pass (used only in the AI prompt). */
   reclaimedIds?: string[]
   onRestart: () => void
+  /** Manual-mapping mode: search/add/remove cards transcribed from an
+   * in-person reading. Changes the header copy and the AI prompt framing. */
+  editable?: {
+    onAdd: (archetype: Archetype) => void
+    onRemove: (id: string) => void
+  }
 }
 
 /** Tokens whose boxes sit within this gap (fraction of table width) are "allied". */
@@ -97,6 +104,87 @@ function initialLayout(n: number): { left: number; top: number }[] {
   })
 }
 
+/** Spawn point for the i-th card added in mapping mode: a golden-angle spiral
+ * out from the table's center, so successive adds never stack exactly. */
+function spawnPosition(i: number): { left: number; top: number } {
+  const clamp = (v: number) => Math.max(22, Math.min(78, v))
+  const angle = i * 2.39996 // golden angle
+  const radius = 8 + 7 * Math.sqrt(i)
+  return {
+    left: clamp(50 + radius * Math.cos(angle)),
+    top: clamp(40 + radius * Math.sin(angle) * 0.8),
+  }
+}
+
+/** Search-to-seat field for mapping mode. Enter seats the first match. */
+function ArchetypeSearch({
+  seatedIds,
+  onAdd,
+}: {
+  seatedIds: Set<string>
+  onAdd: (a: Archetype) => void
+}) {
+  const [query, setQuery] = useState('')
+  const inputRef = useRef<HTMLInputElement>(null)
+  const matches = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    if (!q) return []
+    return ARCHETYPES.filter(
+      (a) =>
+        !seatedIds.has(a.id) &&
+        (a.name.toLowerCase().includes(q) || a.family.toLowerCase().includes(q)),
+    ).slice(0, 7)
+  }, [query, seatedIds])
+
+  function add(a: Archetype) {
+    onAdd(a)
+    setQuery('')
+    inputRef.current?.focus()
+  }
+
+  return (
+    <div className="relative z-40 mb-3 w-[min(92vw,560px)] shrink-0">
+      <input
+        ref={inputRef}
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' && matches[0]) add(matches[0])
+          if (e.key === 'Escape') setQuery('')
+        }}
+        placeholder="Search the deck — name or family — then press Enter to seat…"
+        aria-label="Search archetypes"
+        className="w-full border border-gold/30 bg-ink/70 px-4 py-2.5 font-body text-[15px] text-ivory transition outline-none placeholder:text-ivory/35 focus:border-gold/60"
+      />
+      {matches.length > 0 && (
+        <ul className="absolute top-full right-0 left-0 mt-1 border border-gold/30 bg-panel/95 shadow-2xl backdrop-blur-sm">
+          {matches.map((a) => (
+            <li key={a.id}>
+              <button
+                onClick={() => add(a)}
+                className="flex w-full items-baseline gap-2.5 px-4 py-2 text-left transition hover:bg-gold/10"
+              >
+                <span
+                  aria-hidden
+                  className="block h-1.5 w-1.5 shrink-0 translate-y-[-1px] rotate-45"
+                  style={{ background: FAMILY_COLOR[a.family] }}
+                />
+                <span className="font-body text-[15px] text-ivory">{a.name}</span>
+                <span
+                  className="font-display ml-auto text-[9px] tracking-[0.25em] uppercase"
+                  style={{ color: FAMILY_COLOR[a.family] }}
+                >
+                  {a.family}
+                </span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  )
+}
+
 /** Engraved table: concentric gold rings, dotted orbit, tick marks, center star. */
 function TableEngraving() {
   const ticks = Array.from({ length: 24 }, (_, i) => {
@@ -130,12 +218,31 @@ function TableEngraving() {
   )
 }
 
-export function Roundtable({ cards, reclaimedIds = [], onRestart }: RoundtableProps) {
+export function Roundtable({
+  cards,
+  reclaimedIds = [],
+  onRestart,
+  editable,
+}: RoundtableProps) {
   const tableRef = useRef<HTMLDivElement>(null)
   const [exporting, setExporting] = useState(false)
   const [done, setDone] = useState(false)
   const [copied, setCopied] = useState(false)
-  const layout = useRef(initialLayout(cards.length)).current
+
+  // Per-card spawn positions. Guided mode seeds the full ring up front;
+  // mapping mode assigns a spiral spot to each card as it is added (and
+  // remembers it, so a removed-then-re-added card returns where it spawned).
+  const positionsRef = useRef(new Map<string, { left: number; top: number }>())
+  const spawnCount = useRef(0)
+  if (!editable && positionsRef.current.size === 0 && cards.length > 0) {
+    const ring = initialLayout(cards.length)
+    cards.forEach((c, i) => positionsRef.current.set(c.id, ring[i]))
+  }
+  cards.forEach((c) => {
+    if (!positionsRef.current.has(c.id)) {
+      positionsRef.current.set(c.id, spawnPosition(spawnCount.current++))
+    }
+  })
 
   async function handleExport() {
     if (!tableRef.current) return
@@ -152,7 +259,9 @@ export function Roundtable({ cards, reclaimedIds = [], onRestart }: RoundtablePr
   async function handleCopyPrompt() {
     if (!tableRef.current) return
     const { seated, groups } = readTable(tableRef.current, cards)
-    const prompt = buildPrompt(seated, groups, new Set(reclaimedIds))
+    const prompt = buildPrompt(seated, groups, new Set(reclaimedIds), {
+      manual: !!editable,
+    })
     try {
       await navigator.clipboard.writeText(prompt)
     } catch {
@@ -172,19 +281,37 @@ export function Roundtable({ cards, reclaimedIds = [], onRestart }: RoundtablePr
     <div className="starfield flex h-[100dvh] flex-col items-center overflow-y-auto px-5 py-5">
       <header className="mb-3 max-w-xl shrink-0 text-center">
         <p className="font-display text-[10px] font-medium tracking-[0.42em] text-gold/75 uppercase">
-          IV · The Roundtable
+          {editable ? 'The Roundtable · Mapped by Hand' : 'IV · The Roundtable'}
         </p>
         <h1 className="font-display mt-2.5 text-[1.65rem] leading-tight font-semibold tracking-[0.08em] text-ivory uppercase sm:text-3xl">
-          Seat your archetypes
+          {editable ? 'Map your table' : 'Seat your archetypes'}
         </h1>
         <OrnamentRule className="mt-3" />
         <p className="mx-auto mt-2.5 max-w-md font-body text-[15px] leading-snug text-ivory/60">
-          Drag each archetype into place. Set the ones you identify with most
-          <span className="text-gold-bright/90"> closest to You</span>. Place archetypes
-          that are <span className="text-gold-bright/90">allied</span> — that support or
-          keep each other in check — <span className="text-gold-bright/90">near each other</span>.
+          {editable ? (
+            <>
+              Recreate the table from your in-person reading: search the deck, seat
+              each archetype, then drag it into place — those you identify with most
+              <span className="text-gold-bright/90"> closest to You</span>, allied
+              cards <span className="text-gold-bright/90">near each other</span>.
+            </>
+          ) : (
+            <>
+              Drag each archetype into place. Set the ones you identify with most
+              <span className="text-gold-bright/90"> closest to You</span>. Place archetypes
+              that are <span className="text-gold-bright/90">allied</span> — that support or
+              keep each other in check — <span className="text-gold-bright/90">near each other</span>.
+            </>
+          )}
         </p>
       </header>
+
+      {editable && (
+        <ArchetypeSearch
+          seatedIds={new Set(cards.map((c) => c.id))}
+          onAdd={editable.onAdd}
+        />
+      )}
 
       {/* The exportable table surface */}
       <div
@@ -208,16 +335,33 @@ export function Roundtable({ cards, reclaimedIds = [], onRestart }: RoundtablePr
           </div>
         </div>
 
+        {/* Empty-table hint (mapping mode) */}
+        {editable && cards.length === 0 && (
+          <p className="absolute inset-x-8 top-[36%] text-center font-body text-[15px] text-ivory/40 italic">
+            Search the deck above to seat the first archetype from your reading.
+          </p>
+        )}
+
         {/* Draggable archetype tokens */}
-        {cards.map((card, i) => (
+        {cards.map((card) => (
           <Token
             key={card.id}
             archetype={card}
-            start={layout[i]}
+            start={positionsRef.current.get(card.id)!}
             constraintsRef={tableRef}
+            onRemove={editable ? () => editable.onRemove(card.id) : undefined}
+            hideRemove={exporting}
           />
         ))}
       </div>
+
+      {/* Seated count (mapping mode) */}
+      {editable && cards.length > 0 && (
+        <p className="mt-2 shrink-0 font-body text-[13px] text-ivory/40 italic">
+          {cards.length} seated
+          {cards.length > 12 ? ' — past a dozen, the table gets hard to read' : ''}
+        </p>
+      )}
 
       {/* Controls (excluded from the export since they live outside tableRef) */}
       <div className="mt-4 flex shrink-0 flex-wrap items-center justify-center gap-3">
@@ -239,17 +383,25 @@ function Token({
   archetype,
   start,
   constraintsRef,
+  onRemove,
+  hideRemove,
 }: {
   archetype: Archetype
   start: { left: number; top: number }
   constraintsRef: React.RefObject<HTMLDivElement | null>
+  /** Present in mapping mode: unseat this card. */
+  onRemove?: () => void
+  /** Suppress the remove control while the table is being exported. */
+  hideRemove?: boolean
 }) {
   const accent = FAMILY_COLOR[archetype.family]
   const [active, setActive] = useState(false)
+  // On touch devices there is no hover; a tap toggles the remove control.
+  const [tapped, setTapped] = useState(false)
   return (
     <motion.div
       data-token-id={archetype.id}
-      className="draggable absolute z-10 -translate-x-1/2 -translate-y-1/2 cursor-grab active:cursor-grabbing"
+      className="group draggable absolute z-10 -translate-x-1/2 -translate-y-1/2 cursor-grab active:cursor-grabbing"
       style={{ left: `${start.left}%`, top: `${start.top}%` }}
       drag
       dragConstraints={constraintsRef}
@@ -257,6 +409,7 @@ function Token({
       dragMomentum={false}
       onDragStart={() => setActive(true)}
       onDragEnd={() => setActive(false)}
+      onTap={() => onRemove && setTapped((t) => !t)}
       whileDrag={{ scale: 1.08, zIndex: 30 }}
     >
       <div
@@ -276,6 +429,21 @@ function Token({
           {archetype.name}
         </span>
       </div>
+      {onRemove && !hideRemove && (
+        <button
+          onPointerDownCapture={(e) => e.stopPropagation()}
+          onClick={(e) => {
+            e.stopPropagation()
+            onRemove()
+          }}
+          aria-label={`Remove ${archetype.name}`}
+          className={`absolute -top-2.5 -right-2.5 z-20 flex h-5 w-5 items-center justify-center rounded-full border border-gold/50 bg-ink text-[10px] leading-none text-ivory/80 transition hover:border-gold hover:text-gold-bright ${
+            tapped ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+          }`}
+        >
+          ✕
+        </button>
+      )}
     </motion.div>
   )
 }

@@ -52,6 +52,15 @@ Routing (`route()` in App.tsx, applied after Stage 1 and again after Shadow): 0 
 Reclaimed shadow cards are **not** visually distinguished afterward — once merged they are
 ordinary kept cards.
 
+**Manual mapping mode** (`stage: 'mapping'`, entered from the intro's "Done in person?"
+button): an empty, editable Roundtable for transcribing a reading done with the physical
+deck. `MappingStage` (in App.tsx) owns the cards; `Roundtable`'s `editable` prop switches
+on the search-to-seat bar (`ArchetypeSearch`, Enter seats the first match), per-token ×
+remove controls (hover on desktop, tap-toggle on touch; suppressed during PNG export),
+golden-angle spiral spawn positions instead of the guided ring, and **no card cap** (a
+gentle note appears past 12). The AI prompt switches to in-person framing
+(`buildPrompt`'s `manual` flag) and omits all journey/shadow-reclaim language.
+
 **One swipe primitive, reused.** `SwipeStack` is a generic binary-swipe component
 (configurable `left`/`right` `SwipeSide`s) used by *both* Stage 1 and Stage 2. Because of
 this, the two stages render identical-looking UI and both show an "N left" counter — do
