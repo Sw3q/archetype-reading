@@ -3,11 +3,79 @@ import { motion } from 'framer-motion'
 import type { Archetype } from '../types'
 import { FAMILY_COLOR } from '../lib/family'
 import { exportNodeAsPng } from '../lib/exportImage'
+import { buildPrompt, type SeatedCard } from '../lib/buildPrompt'
 import { OrnamentRule } from './StageLayout'
 
 interface RoundtableProps {
   cards: Archetype[]
+  /** Ids reclaimed during the Shadow pass (used only in the AI prompt). */
+  reclaimedIds?: string[]
   onRestart: () => void
+}
+
+/** Tokens whose boxes sit within this gap (fraction of table width) are "allied". */
+const CLUSTER_GAP = 0.04
+
+interface Box {
+  cx: number
+  cy: number
+  l: number
+  t: number
+  r: number
+  b: number
+}
+
+/** Shortest edge-to-edge distance between two boxes (0 when overlapping). */
+function boxGap(a: Box, b: Box): number {
+  const dx = Math.max(0, Math.max(a.l, b.l) - Math.min(a.r, b.r))
+  const dy = Math.max(0, Math.max(a.t, b.t) - Math.min(a.b, b.b))
+  return Math.hypot(dx, dy)
+}
+
+/** Read live token/You positions from the DOM (drag state lives in framer-motion,
+ * not React state, so the rendered boxes are the source of truth). */
+function readTable(table: HTMLDivElement, cards: Archetype[]) {
+  const rect = table.getBoundingClientRect()
+  const norm = (r: DOMRect): Box => ({
+    cx: (r.left + r.width / 2 - rect.left) / rect.width,
+    cy: (r.top + r.height / 2 - rect.top) / rect.height,
+    l: (r.left - rect.left) / rect.width,
+    t: (r.top - rect.top) / rect.height,
+    r: (r.right - rect.left) / rect.width,
+    b: (r.bottom - rect.top) / rect.height,
+  })
+  const you = norm(table.querySelector('[data-you]')!.getBoundingClientRect())
+  const boxes = new Map<string, Box>()
+  table.querySelectorAll<HTMLElement>('[data-token-id]').forEach((el) => {
+    boxes.set(el.dataset.tokenId!, norm(el.getBoundingClientRect()))
+  })
+
+  const seated: SeatedCard[] = cards.map((archetype) => {
+    const p = boxes.get(archetype.id)!
+    return { archetype, dist: Math.hypot(p.cx - you.cx, p.cy - you.cy) }
+  })
+
+  // Allied clusters = connected components of near-touching tokens.
+  const groups: Archetype[][] = []
+  const assigned = new Set<string>()
+  for (const card of cards) {
+    if (assigned.has(card.id)) continue
+    const group = [card]
+    assigned.add(card.id)
+    for (let i = 0; i < group.length; i++) {
+      const gb = boxes.get(group[i].id)!
+      for (const other of cards) {
+        if (assigned.has(other.id)) continue
+        if (boxGap(gb, boxes.get(other.id)!) <= CLUSTER_GAP) {
+          group.push(other)
+          assigned.add(other.id)
+        }
+      }
+    }
+    if (group.length > 1) groups.push(group)
+  }
+
+  return { seated, groups }
 }
 
 /** Initial token positions: spread around a circle in the upper table, so the
@@ -62,10 +130,11 @@ function TableEngraving() {
   )
 }
 
-export function Roundtable({ cards, onRestart }: RoundtableProps) {
+export function Roundtable({ cards, reclaimedIds = [], onRestart }: RoundtableProps) {
   const tableRef = useRef<HTMLDivElement>(null)
   const [exporting, setExporting] = useState(false)
   const [done, setDone] = useState(false)
+  const [copied, setCopied] = useState(false)
   const layout = useRef(initialLayout(cards.length)).current
 
   async function handleExport() {
@@ -78,6 +147,25 @@ export function Roundtable({ cards, onRestart }: RoundtableProps) {
     } finally {
       setExporting(false)
     }
+  }
+
+  async function handleCopyPrompt() {
+    if (!tableRef.current) return
+    const { seated, groups } = readTable(tableRef.current, cards)
+    const prompt = buildPrompt(seated, groups, new Set(reclaimedIds))
+    try {
+      await navigator.clipboard.writeText(prompt)
+    } catch {
+      // Clipboard API unavailable (e.g. insecure context) — legacy fallback.
+      const ta = document.createElement('textarea')
+      ta.value = prompt
+      document.body.appendChild(ta)
+      ta.select()
+      document.execCommand('copy')
+      ta.remove()
+    }
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2500)
   }
 
   return (
@@ -112,6 +200,7 @@ export function Roundtable({ cards, onRestart }: RoundtableProps) {
         {/* "You" node, fixed at bottom-center */}
         <div className="absolute bottom-[5%] left-1/2 flex -translate-x-1/2 flex-col items-center">
           <div
+            data-you
             className="font-display flex h-16 w-16 items-center justify-center rounded-full border border-gold/80 bg-ink/80 text-[13px] font-semibold tracking-[0.18em] text-gold-bright uppercase"
             style={{ boxShadow: '0 0 0 3px rgba(11,9,8,0.9), 0 0 0 4px rgba(201,163,90,0.35), 0 0 30px -6px rgba(201,163,90,0.45)' }}
           >
@@ -131,9 +220,12 @@ export function Roundtable({ cards, onRestart }: RoundtableProps) {
       </div>
 
       {/* Controls (excluded from the export since they live outside tableRef) */}
-      <div className="mt-4 flex shrink-0 items-center gap-3">
+      <div className="mt-4 flex shrink-0 flex-wrap items-center justify-center gap-3">
         <button onClick={onRestart} className="btn-ghost">
           Start over
+        </button>
+        <button onClick={handleCopyPrompt} className="btn-ghost">
+          {copied ? 'Copied ✓' : 'Copy AI prompt'}
         </button>
         <button onClick={handleExport} disabled={exporting} className="btn-gold">
           {exporting ? 'Rendering…' : done ? 'Saved ✓' : 'Export as image'}
@@ -156,6 +248,7 @@ function Token({
   const [active, setActive] = useState(false)
   return (
     <motion.div
+      data-token-id={archetype.id}
       className="draggable absolute z-10 -translate-x-1/2 -translate-y-1/2 cursor-grab active:cursor-grabbing"
       style={{ left: `${start.left}%`, top: `${start.top}%` }}
       drag

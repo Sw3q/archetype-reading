@@ -78,6 +78,16 @@ captures **only** `tableRef` (`lib/exportImage.ts` → html-to-image `toPng`), s
 rendered outside that node — the heading, the Start over / Export buttons — is excluded
 from the image by construction.
 
+**AI prompt export** ("Copy AI prompt" on the roundtable): because drag state lives in
+framer-motion rather than React state, `readTable()` measures the live DOM boxes
+(`[data-token-id]`, `[data-you]`) to compute each card's distance-from-You and allied
+clusters (connected components of tokens whose edge-to-edge gap < 4% of table width —
+edge gap, not center distance, so wide side-by-side tokens still count). `lib/buildPrompt.ts`
+turns that plus the deck's light/shadow lines into a Jungian-analyst session prompt on the
+clipboard. Cards reclaimed in the Shadow stage are flagged in the prompt (and only there):
+App.tsx tracks `reclaimedIds` and passes them to `Roundtable` — they remain visually
+indistinguishable in the UI.
+
 ## Data pipeline
 
 `scripts/extract-archetypes.py` parses `gallery.pdf` (Myss's official Gallery of

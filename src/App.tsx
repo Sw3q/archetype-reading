@@ -37,14 +37,19 @@ export default function App() {
   // A fresh shuffle each time a reading begins.
   const [seed, setSeed] = useState(0)
   const deck = useMemo(() => shuffle(ARCHETYPES), [seed])
+  // Ids reclaimed during the Shadow pass — not shown in the UI, but fed into
+  // the AI-session prompt as "initially denied, then admitted".
+  const [reclaimedIds, setReclaimedIds] = useState<string[]>([])
 
   function begin() {
     setSeed((s) => s + 1)
+    setReclaimedIds([])
     setStage({ name: 'swipe' })
   }
 
   function restart() {
     setSeed((s) => s + 1)
+    setReclaimedIds([])
     setStage({ name: 'intro' })
   }
 
@@ -84,8 +89,10 @@ export default function App() {
 
     case 'shadow': {
       // Reviewing the rejected pile: right = reclaim. Reclaimed merge into kept.
-      const finish = (reclaimed: Archetype[]) =>
+      const finish = (reclaimed: Archetype[]) => {
+        setReclaimedIds(reclaimed.map((a) => a.id))
         route([...stage.kept, ...reclaimed])
+      }
       return (
         <StageLayout
           eyebrow="II · The Shadow"
@@ -114,7 +121,13 @@ export default function App() {
       )
 
     case 'roundtable':
-      return <Roundtable cards={stage.final} onRestart={restart} />
+      return (
+        <Roundtable
+          cards={stage.final}
+          reclaimedIds={reclaimedIds}
+          onRestart={restart}
+        />
+      )
 
     case 'empty':
       return (

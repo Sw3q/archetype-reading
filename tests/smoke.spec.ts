@@ -1,13 +1,14 @@
 import { test, expect, type Page } from '@playwright/test'
 
 /**
- * Decide exactly `total` cards in the current swipe round: the first `keep`
- * right (yes/innate), the rest left. Deterministic count, because both Stage 1
- * and Stage 2 render the same swipe UI and can't be told apart by on-screen text.
+ * Decide exactly `total` cards in the current swipe round: cards where
+ * `keep(i)` is true go right (yes/innate), the rest left. Deterministic count,
+ * because Stage 1 and Stage 2 render the same swipe UI and can't be told apart
+ * by on-screen text.
  */
-async function decideRound(page: Page, total: number, keep: number) {
+async function decideRound(page: Page, total: number, keep: (i: number) => boolean) {
   for (let i = 0; i < total; i++) {
-    const id = i < keep ? 'swipe-yes' : 'swipe-no'
+    const id = keep(i) ? 'swipe-yes' : 'swipe-no'
     await page.getByTestId(id).click()
     await page.waitForTimeout(40)
   }
@@ -32,7 +33,7 @@ test('full reading flow: intro -> swipe -> filter -> roundtable -> export', asyn
   await page.getByTestId('swipe-undo').click()
   await expect(page.getByText('91 left')).toBeVisible()
 
-  await decideRound(page, 91, 12)
+  await decideRound(page, 91, (i) => i < 12)
 
   // Stage 2 (The Shadow): review the rejected pile, reclaim 2, then skip the rest.
   await expect(page.getByRole('heading', { name: 'Look again' })).toBeVisible()
@@ -44,12 +45,13 @@ test('full reading flow: intro -> swipe -> filter -> roundtable -> export', asyn
 
   // Stage 3 round 1: combined pile is 12 + 2 = 14; keep all (no progress) -> interstitial
   await expect(page.getByRole('heading', { name: 'Innate or Adaptive?' })).toBeVisible()
-  await decideRound(page, 14, 14)
+  await decideRound(page, 14, () => true)
   await expect(page.getByRole('heading', { name: 'Round complete' })).toBeVisible()
   await page.getByRole('button', { name: 'Next round' }).click()
 
-  // Stage 3 round 2: keep 6 (<8) -> rescue/top-up phase
-  await decideRound(page, 14, 6)
+  // Stage 3 round 2: keep the last 6 (<8) — these include the two shadow-reclaimed
+  // cards, which sit at the end of the pile -> rescue/top-up phase
+  await decideRound(page, 14, (i) => i >= 8)
   await expect(page.getByRole('button', { name: /Seat \d+ at the roundtable/ })).toBeVisible()
   await page.getByRole('button', { name: /Seat \d+ at the roundtable/ }).click()
 
@@ -70,6 +72,17 @@ test('full reading flow: intro -> swipe -> filter -> roundtable -> export', asyn
   const after = await token.boundingBox()
   if (!after) throw new Error('token disappeared after drag')
   expect(Math.abs(after.x - before.x) + Math.abs(after.y - before.y)).toBeGreaterThan(20)
+
+  // Copy AI prompt puts the full session prompt on the clipboard
+  await page.getByRole('button', { name: 'Copy AI prompt' }).click()
+  await expect(page.getByRole('button', { name: 'Copied ✓' })).toBeVisible()
+  const prompt = await page.evaluate(() => navigator.clipboard.readText())
+  expect(prompt).toContain('Jungian depth psychoanalyst')
+  expect(prompt).toContain('My table, from closest to me to farthest:')
+  expect(prompt).toContain('Light, "')
+  expect(prompt).toContain('Shadow, "')
+  // The two shadow-reclaimed cards from stage 2 must be flagged
+  expect(prompt.match(/Reclaimed from my shadow pass/g)?.length).toBeGreaterThanOrEqual(1)
 
   // Export downloads a real, non-trivial PNG
   const downloadPromise = page.waitForEvent('download')
