@@ -81,8 +81,8 @@ export function Roundtable({ cards, onRestart }: RoundtableProps) {
   }
 
   return (
-    <div className="starfield flex min-h-[100dvh] flex-col items-center px-5 py-8">
-      <header className="mb-4 max-w-xl shrink-0 text-center">
+    <div className="starfield flex h-[100dvh] flex-col items-center overflow-y-auto px-5 py-5">
+      <header className="mb-3 max-w-xl shrink-0 text-center">
         <p className="font-display text-[10px] font-medium tracking-[0.42em] text-gold/75 uppercase">
           IV · The Roundtable
         </p>
@@ -90,7 +90,7 @@ export function Roundtable({ cards, onRestart }: RoundtableProps) {
           Seat your archetypes
         </h1>
         <OrnamentRule className="mt-3" />
-        <p className="mx-auto mt-3 max-w-md font-body text-[15px] leading-relaxed text-ivory/60">
+        <p className="mx-auto mt-2.5 max-w-md font-body text-[15px] leading-snug text-ivory/60">
           Drag each archetype into place. Set the ones you identify with most
           <span className="text-gold-bright/90"> closest to You</span>. Place archetypes
           that are <span className="text-gold-bright/90">allied</span> — that support or
@@ -101,7 +101,7 @@ export function Roundtable({ cards, onRestart }: RoundtableProps) {
       {/* The exportable table surface */}
       <div
         ref={tableRef}
-        className="tarot-frame relative aspect-square w-[min(92vw,560px)] shrink-0 overflow-hidden"
+        className="tarot-frame relative aspect-square w-[min(92vw,560px,calc(100dvh-320px))] shrink-0 overflow-hidden"
         style={{
           background:
             'radial-gradient(circle at 50% 42%, #1a140c 0%, #120e09 52%, #0b0908 100%)',
@@ -131,7 +131,7 @@ export function Roundtable({ cards, onRestart }: RoundtableProps) {
       </div>
 
       {/* Controls (excluded from the export since they live outside tableRef) */}
-      <div className="mt-6 flex shrink-0 items-center gap-3">
+      <div className="mt-4 flex shrink-0 items-center gap-3">
         <button onClick={onRestart} className="btn-ghost">
           Start over
         </button>

@@ -150,7 +150,7 @@ export function SwipeStack({
   const visible = cards.slice(index, index + 3)
 
   return (
-    <div className="flex w-full flex-col items-center gap-6">
+    <div className="flex w-full flex-col items-center gap-4">
       {/* Progress */}
       <div className="flex w-full max-w-sm items-center gap-3">
         <div className="h-px flex-1 bg-gold/15">
@@ -164,8 +164,9 @@ export function SwipeStack({
         </span>
       </div>
 
-      {/* Card stack */}
-      <div className="relative aspect-[3/4] w-[min(86vw,360px)]">
+      {/* Card stack — width also capped by viewport height (card is 4/3 of its
+          width; ~390px of chrome surrounds it) so the stage never scrolls. */}
+      <div className="relative aspect-[3/4] w-[min(86vw,360px,calc((100dvh-390px)*0.75))]">
         {visible
           .map((card, i) => {
             const depth = i // 0 = top

@@ -28,25 +28,27 @@ export function StageLayout({
   footer,
 }: StageLayoutProps) {
   return (
-    <div className="starfield relative flex min-h-[100dvh] flex-col items-center px-5 py-8">
-      <header className="mb-5 max-w-xl shrink-0 text-center">
+    // Locked to the viewport: stages are designed to fit without scrolling
+    // (overflow-y-auto is only a fallback for pathologically short windows).
+    <div className="starfield relative flex h-[100dvh] flex-col items-center overflow-y-auto px-5 py-5">
+      <header className="mb-3 max-w-xl shrink-0 text-center">
         <p className="font-display text-[10px] font-medium tracking-[0.42em] text-gold/75 uppercase">
           {eyebrow}
         </p>
-        <h1 className="font-display mt-2.5 text-[1.65rem] leading-tight font-semibold tracking-[0.08em] text-ivory uppercase sm:text-3xl">
+        <h1 className="font-display mt-2 text-[1.55rem] leading-tight font-semibold tracking-[0.08em] text-ivory uppercase sm:text-3xl">
           {title}
         </h1>
-        <OrnamentRule className="mt-3" />
+        <OrnamentRule className="mt-2.5" />
         {instruction && (
-          <p className="mx-auto mt-3 max-w-md font-body text-[15px] leading-relaxed text-ivory/60">
+          <p className="mx-auto mt-2.5 max-w-md font-body text-[15px] leading-snug text-ivory/60">
             {instruction}
           </p>
         )}
       </header>
-      <main className="flex w-full flex-1 flex-col items-center justify-center">
+      <main className="flex min-h-0 w-full flex-1 flex-col items-center justify-center">
         {children}
       </main>
-      {footer && <footer className="mt-4 shrink-0">{footer}</footer>}
+      {footer && <footer className="mt-3 shrink-0">{footer}</footer>}
     </div>
   )
 }
