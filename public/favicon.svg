@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- A miniature of the app's roundtable: dark table, rings, colored seats, "You" at bottom. -->
+  <circle cx="32" cy="32" r="31" fill="#14121d" stroke="rgba(255,255,255,0.22)" stroke-width="2"/>
+  <circle cx="32" cy="32" r="20" fill="none" stroke="rgba(255,255,255,0.16)" stroke-width="2"/>
+  <circle cx="32" cy="32" r="10" fill="none" stroke="rgba(255,255,255,0.09)" stroke-width="2"/>
+  <!-- Archetype seats around the upper arc (family accent colors) -->
+  <circle cx="12" cy="32" r="4.5" fill="#d98a5b"/>
+  <circle cx="17.9" cy="17.9" r="4.5" fill="#d76d92"/>
+  <circle cx="32" cy="12" r="4.5" fill="#b58bd9"/>
+  <circle cx="46.1" cy="17.9" r="4.5" fill="#5fb8c9"/>
+  <circle cx="52" cy="32" r="4.5" fill="#6fc79a"/>
+  <!-- You, at the bottom of the table -->
+  <circle cx="32" cy="48" r="6" fill="#ffffff"/>
+</svg>
