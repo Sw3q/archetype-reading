@@ -1,23 +1,44 @@
 @import 'tailwindcss';
 
 @theme {
-  --font-display: 'Cormorant Garamond', ui-serif, Georgia, serif;
-  --font-body: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  /* Gilded tarot — ceremonial Roman caps, readable old-style serif. */
+  --font-display: 'Cinzel', ui-serif, Georgia, serif;
+  --font-card: 'Cormorant Garamond', ui-serif, Georgia, serif;
+  --font-body: 'EB Garamond', ui-serif, Georgia, serif;
 
-  /* Archetype family accent colors. */
-  --color-fam-survival: #d98a5b;
-  --color-fam-feminine: #d76d92;
-  --color-fam-masculine: #6f8fd9;
-  --color-fam-spiritual: #b58bd9;
-  --color-fam-intellectual: #5fb8c9;
-  --color-fam-helper: #6fc79a;
-  --color-fam-creative: #e0b15a;
-  --color-fam-action: #d95b5b;
-  --color-fam-shadow: #8a8f9c;
+  /* Grounds — warm lamp-black, never blue. */
+  --color-ink: #0b0908;
+  --color-ink-2: #120e0b;
+  --color-panel: #161109;
+
+  /* Gold leaf. */
+  --color-gold: #c9a35a;
+  --color-gold-bright: #ecd296;
+  --color-gold-dim: #8a703c;
+
+  /* Ink & paper. */
+  --color-ivory: #e9e1cd;
+  --color-ash: #8f8a7c;
+
+  /* Archetype families — antiqued jewel tones (mirrored in src/lib/family.ts). */
+  --color-fam-survival: #b25a42;
+  --color-fam-feminine: #b06179;
+  --color-fam-masculine: #5d7fb7;
+  --color-fam-spiritual: #9a72c4;
+  --color-fam-intellectual: #4a9a9c;
+  --color-fam-helper: #5aa276;
+  --color-fam-creative: #c79a3e;
+  --color-fam-action: #b85048;
+  --color-fam-shadow: #8d8a80;
 }
 
 :root {
   color-scheme: dark;
+}
+
+::selection {
+  background: #c9a35a;
+  color: #0b0908;
 }
 
 html,
@@ -30,10 +51,31 @@ body {
   margin: 0;
   font-family: var(--font-body);
   background:
-    radial-gradient(circle at 50% 0%, #1f1b2e 0%, #14121d 45%, #0c0a12 100%);
-  color: #e9e5f2;
+    radial-gradient(120% 90% at 50% 0%, #191309 0%, #100c08 38%, #0b0908 72%, #080605 100%);
+  color: var(--color-ivory);
   -webkit-font-smoothing: antialiased;
   overscroll-behavior: none;
+}
+
+/* Hairline gilt frame inset from the viewport edge — the page as a card. */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 10px;
+  border: 1px solid rgba(201, 163, 90, 0.22);
+  pointer-events: none;
+  z-index: 60;
+}
+
+/* Engraver's grain. */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 70;
+  opacity: 0.05;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
 /* Draggable elements must opt out of browser touch panning. */
@@ -43,17 +85,114 @@ body {
   user-select: none;
 }
 
-/* Subtle starfield texture for the backdrop. */
+/* Faint gold dust over the dark ground. */
 .starfield::before {
   content: '';
   position: fixed;
   inset: 0;
   pointer-events: none;
   background-image:
-    radial-gradient(1px 1px at 20% 30%, rgba(255, 255, 255, 0.4) 0, transparent 100%),
-    radial-gradient(1px 1px at 70% 60%, rgba(255, 255, 255, 0.3) 0, transparent 100%),
-    radial-gradient(1px 1px at 40% 80%, rgba(255, 255, 255, 0.25) 0, transparent 100%),
-    radial-gradient(1px 1px at 85% 15%, rgba(255, 255, 255, 0.3) 0, transparent 100%),
-    radial-gradient(1px 1px at 10% 70%, rgba(255, 255, 255, 0.2) 0, transparent 100%);
-  opacity: 0.6;
+    radial-gradient(1px 1px at 21% 28%, rgba(236, 210, 150, 0.5) 0, transparent 100%),
+    radial-gradient(1px 1px at 68% 14%, rgba(236, 210, 150, 0.35) 0, transparent 100%),
+    radial-gradient(1.5px 1.5px at 84% 61%, rgba(201, 163, 90, 0.4) 0, transparent 100%),
+    radial-gradient(1px 1px at 38% 77%, rgba(236, 210, 150, 0.3) 0, transparent 100%),
+    radial-gradient(1px 1px at 9% 56%, rgba(201, 163, 90, 0.3) 0, transparent 100%),
+    radial-gradient(1.5px 1.5px at 55% 42%, rgba(236, 210, 150, 0.22) 0, transparent 100%);
+  opacity: 0.7;
+}
+
+/* Gold-leaf lettering. */
+.gold-foil {
+  background: linear-gradient(170deg, #f3e3b4 0%, #e3c178 28%, #b98f3e 55%, #dcb96f 78%, #9c7a35 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Double hairline tarot frame with corner dots; apply to a positioned box. */
+.tarot-frame {
+  border: 1px solid rgba(201, 163, 90, 0.38);
+  position: relative;
+}
+.tarot-frame::before {
+  content: '';
+  position: absolute;
+  inset: 5px;
+  border: 1px solid rgba(201, 163, 90, 0.18);
+  pointer-events: none;
+  background-image:
+    radial-gradient(circle at 0 0, rgba(236, 210, 150, 0.9) 1px, transparent 1.8px),
+    radial-gradient(circle at 100% 0, rgba(236, 210, 150, 0.9) 1px, transparent 1.8px),
+    radial-gradient(circle at 0 100%, rgba(236, 210, 150, 0.9) 1px, transparent 1.8px),
+    radial-gradient(circle at 100% 100%, rgba(236, 210, 150, 0.9) 1px, transparent 1.8px);
+}
+
+/* Buttons — pressed gold leaf and hairline ghosts. */
+.btn-gold {
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: #15100a;
+  padding: 0.95rem 2.6rem;
+  background: linear-gradient(175deg, #ecd296 0%, #cda44f 45%, #a8813a 100%);
+  border: 1px solid rgba(236, 210, 150, 0.5);
+  box-shadow:
+    0 0 0 1px rgba(11, 9, 8, 0.9),
+    0 0 32px -10px rgba(201, 163, 90, 0.55),
+    inset 0 1px 0 rgba(255, 244, 214, 0.6);
+  transition: transform 0.15s ease, box-shadow 0.2s ease, filter 0.2s ease;
+}
+.btn-gold:hover:enabled {
+  transform: translateY(-1px);
+  filter: brightness(1.06);
+  box-shadow:
+    0 0 0 1px rgba(11, 9, 8, 0.9),
+    0 0 44px -8px rgba(201, 163, 90, 0.7),
+    inset 0 1px 0 rgba(255, 244, 214, 0.6);
+}
+.btn-gold:active:enabled {
+  transform: translateY(0) scale(0.98);
+}
+.btn-gold:disabled {
+  opacity: 0.4;
+}
+
+.btn-ghost {
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(233, 225, 205, 0.65);
+  padding: 0.8rem 1.6rem;
+  border: 1px solid rgba(201, 163, 90, 0.3);
+  background: transparent;
+  transition: border-color 0.2s ease, color 0.2s ease;
+}
+.btn-ghost:hover {
+  border-color: rgba(201, 163, 90, 0.6);
+  color: #ecd296;
+}
+
+/* Ceremonial entrance. */
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.rise {
+  animation: rise 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rise {
+    animation: none;
+  }
 }

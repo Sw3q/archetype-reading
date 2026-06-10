@@ -100,7 +100,13 @@ The data extraction needs a python with `pypdf` — this machine's is at
 ## Styling
 
 Tailwind CSS v4 via `@tailwindcss/vite` (no `tailwind.config.js`; theme tokens live in the
-`@theme` block of `src/index.css`). Per-family accent colors are defined in two places that
-must stay in sync: the `--color-fam-*` tokens in `index.css` and the `FAMILY_COLOR` map in
-`src/lib/family.ts` (the latter is what components actually read). Fonts (Cormorant
-Garamond display, Inter body) load from Google Fonts in `index.html`.
+`@theme` block of `src/index.css`). The aesthetic is **gilded tarot**: warm lamp-black
+grounds (`ink`/`panel`), gold-leaf accents (`gold`/`gold-bright`/`gold-dim`), ivory text,
+and a recurring sun/moon duality — gold always means "claimed/innate", silver-ash means
+"set aside/learned". Reusable pieces live in `index.css` (`.tarot-frame` double hairline
+with corner dots, `.gold-foil` text, `.btn-gold`/`.btn-ghost`, `.rise` entrance) and
+`StageLayout.OrnamentRule`. Per-family accent colors (antiqued jewel tones) are defined in
+two places that must stay in sync: the `--color-fam-*` tokens in `index.css` and the
+`FAMILY_COLOR` map in `src/lib/family.ts` (the latter is what components actually read).
+Fonts (Cinzel display caps, Cormorant Garamond card names, EB Garamond body) load from
+Google Fonts in `index.html`.

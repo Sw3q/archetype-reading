@@ -3,6 +3,7 @@ import { motion } from 'framer-motion'
 import type { Archetype } from '../types'
 import { FAMILY_COLOR } from '../lib/family'
 import { exportNodeAsPng } from '../lib/exportImage'
+import { OrnamentRule } from './StageLayout'
 
 interface RoundtableProps {
   cards: Archetype[]
@@ -28,6 +29,39 @@ function initialLayout(n: number): { left: number; top: number }[] {
   })
 }
 
+/** Engraved table: concentric gold rings, dotted orbit, tick marks, center star. */
+function TableEngraving() {
+  const ticks = Array.from({ length: 24 }, (_, i) => {
+    const a = (i / 24) * Math.PI * 2
+    const r1 = 45.5
+    const r2 = i % 6 === 0 ? 43 : 44.3
+    return {
+      x1: 50 + r1 * Math.cos(a),
+      y1: 40 + r1 * Math.sin(a),
+      x2: 50 + r2 * Math.cos(a),
+      y2: 40 + r2 * Math.sin(a),
+    }
+  })
+  return (
+    <svg viewBox="0 0 100 100" className="absolute inset-0 h-full w-full" aria-hidden>
+      <g fill="none" stroke="#c9a35a">
+        <circle cx="50" cy="40" r="46" strokeWidth="0.25" opacity="0.4" />
+        {ticks.map((t, i) => (
+          <line key={i} {...t} strokeWidth="0.25" opacity="0.45" />
+        ))}
+        <circle cx="50" cy="40" r="38" strokeWidth="0.2" opacity="0.28" />
+        <circle cx="50" cy="40" r="29" strokeWidth="0.2" opacity="0.2" strokeDasharray="0.4 2.2" />
+        <circle cx="50" cy="40" r="17" strokeWidth="0.2" opacity="0.16" />
+        <path
+          d="M50 33.5 L51.6 38.4 L56.5 40 L51.6 41.6 L50 46.5 L48.4 41.6 L43.5 40 L48.4 38.4 Z"
+          strokeWidth="0.3"
+          opacity="0.4"
+        />
+      </g>
+    </svg>
+  )
+}
+
 export function Roundtable({ cards, onRestart }: RoundtableProps) {
   const tableRef = useRef<HTMLDivElement>(null)
   const [exporting, setExporting] = useState(false)
@@ -47,50 +81,40 @@ export function Roundtable({ cards, onRestart }: RoundtableProps) {
   }
 
   return (
-    <div className="starfield flex min-h-[100dvh] flex-col items-center px-4 py-6">
-      <header className="mb-3 max-w-xl shrink-0 text-center">
-        <p className="text-[11px] font-semibold tracking-[0.25em] text-white/40 uppercase">
-          Stage 4 · The Roundtable
+    <div className="starfield flex min-h-[100dvh] flex-col items-center px-5 py-8">
+      <header className="mb-4 max-w-xl shrink-0 text-center">
+        <p className="font-display text-[10px] font-medium tracking-[0.42em] text-gold/75 uppercase">
+          IV · The Roundtable
         </p>
-        <h1 className="font-display mt-1 text-3xl font-semibold text-white sm:text-4xl">
+        <h1 className="font-display mt-2.5 text-[1.65rem] leading-tight font-semibold tracking-[0.08em] text-ivory uppercase sm:text-3xl">
           Seat your archetypes
         </h1>
-        <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-white/55">
+        <OrnamentRule className="mt-3" />
+        <p className="mx-auto mt-3 max-w-md font-body text-[15px] leading-relaxed text-ivory/60">
           Drag each archetype into place. Set the ones you identify with most
-          <span className="text-white/80"> closest to You</span>. Place archetypes
-          that are <span className="text-white/80">allied</span> — that support or
-          keep each other in check — <span className="text-white/80">near each other</span>.
+          <span className="text-gold-bright/90"> closest to You</span>. Place archetypes
+          that are <span className="text-gold-bright/90">allied</span> — that support or
+          keep each other in check — <span className="text-gold-bright/90">near each other</span>.
         </p>
       </header>
 
-      {/* The exportable table surface — a rounded square so tokens are never
-          clipped by a circular edge; the rings below depict the round table. */}
+      {/* The exportable table surface */}
       <div
         ref={tableRef}
-        className="relative aspect-square w-[min(92vw,560px)] shrink-0 overflow-hidden rounded-[2rem]"
+        className="tarot-frame relative aspect-square w-[min(92vw,560px)] shrink-0 overflow-hidden"
         style={{
           background:
-            'radial-gradient(circle at 50% 44%, #241f33 0%, #181426 55%, #100d1a 100%)',
-          border: '1px solid rgba(255,255,255,0.08)',
+            'radial-gradient(circle at 50% 42%, #1a140c 0%, #120e09 52%, #0b0908 100%)',
         }}
       >
-        {/* Concentric proximity rings (the "round" table), centered on You-ward focus */}
-        {[0.92, 0.68, 0.44, 0.2].map((s) => (
-          <div
-            key={s}
-            className="absolute aspect-square rounded-full border border-white/5"
-            style={{
-              width: `${s * 100}%`,
-              left: '50%',
-              top: '40%',
-              transform: 'translate(-50%, -50%)',
-            }}
-          />
-        ))}
+        <TableEngraving />
 
         {/* "You" node, fixed at bottom-center */}
-        <div className="absolute bottom-[6%] left-1/2 flex -translate-x-1/2 flex-col items-center">
-          <div className="flex h-16 w-16 items-center justify-center rounded-full border-2 border-white/70 bg-white/10 text-center font-display text-lg font-semibold text-white shadow-lg backdrop-blur-sm">
+        <div className="absolute bottom-[5%] left-1/2 flex -translate-x-1/2 flex-col items-center">
+          <div
+            className="font-display flex h-16 w-16 items-center justify-center rounded-full border border-gold/80 bg-ink/80 text-[13px] font-semibold tracking-[0.18em] text-gold-bright uppercase"
+            style={{ boxShadow: '0 0 0 3px rgba(11,9,8,0.9), 0 0 0 4px rgba(201,163,90,0.35), 0 0 30px -6px rgba(201,163,90,0.45)' }}
+          >
             You
           </div>
         </div>
@@ -107,18 +131,11 @@ export function Roundtable({ cards, onRestart }: RoundtableProps) {
       </div>
 
       {/* Controls (excluded from the export since they live outside tableRef) */}
-      <div className="mt-5 flex shrink-0 items-center gap-3">
-        <button
-          onClick={onRestart}
-          className="rounded-full border border-white/20 px-5 py-2.5 text-sm font-medium text-white/70 transition hover:bg-white/5"
-        >
+      <div className="mt-6 flex shrink-0 items-center gap-3">
+        <button onClick={onRestart} className="btn-ghost">
           Start over
         </button>
-        <button
-          onClick={handleExport}
-          disabled={exporting}
-          className="rounded-full bg-white px-6 py-2.5 text-sm font-semibold text-black transition hover:scale-105 active:scale-95 disabled:opacity-50"
-        >
+        <button onClick={handleExport} disabled={exporting} className="btn-gold">
           {exporting ? 'Rendering…' : done ? 'Saved ✓' : 'Export as image'}
         </button>
       </div>
@@ -150,17 +167,19 @@ function Token({
       whileDrag={{ scale: 1.08, zIndex: 30 }}
     >
       <div
-        className="flex max-w-[130px] select-none items-center gap-1.5 rounded-2xl border px-2.5 py-1.5 shadow-lg backdrop-blur-sm"
+        className="flex max-w-[130px] items-center gap-1.5 border px-2.5 py-1.5 select-none"
         style={{
-          borderColor: accent,
-          background: active ? `${accent}33` : 'rgba(20,17,30,0.85)',
+          borderColor: active ? accent : `${accent}99`,
+          background: active ? `${accent}26` : 'rgba(13,10,8,0.88)',
+          boxShadow: '0 6px 18px -8px rgba(0,0,0,0.8)',
         }}
       >
         <span
-          className="h-2.5 w-2.5 shrink-0 rounded-full"
+          aria-hidden
+          className="block h-1.5 w-1.5 shrink-0 rotate-45"
           style={{ background: accent }}
         />
-        <span className="text-center text-[11px] leading-tight font-semibold text-white">
+        <span className="font-body text-center text-[12px] leading-tight font-medium text-ivory">
           {archetype.name}
         </span>
       </div>

@@ -1,15 +1,15 @@
 import type { ArchetypeFamily } from '../types'
 
-/** Accent color per family (mirrors the --color-fam-* tokens in index.css). */
+/** Antiqued jewel tone per family (mirrors the --color-fam-* tokens in index.css). */
 export const FAMILY_COLOR: Record<ArchetypeFamily, string> = {
-  Survival: '#d98a5b',
-  Feminine: '#d76d92',
-  Masculine: '#6f8fd9',
-  Spiritual: '#b58bd9',
-  Intellectual: '#5fb8c9',
-  Helper: '#6fc79a',
-  Creative: '#e0b15a',
-  Action: '#d95b5b',
-  Shadow: '#8a8f9c',
-  Other: '#9a93b0',
+  Survival: '#b25a42', // garnet clay
+  Feminine: '#b06179', // rose madder
+  Masculine: '#5d7fb7', // lapis
+  Spiritual: '#9a72c4', // amethyst
+  Intellectual: '#4a9a9c', // verdigris
+  Helper: '#5aa276', // jade
+  Creative: '#c79a3e', // topaz
+  Action: '#b85048', // carnelian
+  Shadow: '#8d8a80', // smoke
+  Other: '#a59a82',
 }

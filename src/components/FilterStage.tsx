@@ -2,13 +2,14 @@ import { useState } from 'react'
 import { motion } from 'framer-motion'
 import type { Archetype } from '../types'
 import { FAMILY_COLOR } from '../lib/family'
-import { StageLayout } from './StageLayout'
+import { StageLayout, OrnamentRule } from './StageLayout'
 import { SwipeStack } from './SwipeStack'
 
 const TARGET = 8
 
-const INNATE = { label: 'Innate', hint: "can't help it", color: '#6fc79a' }
-const ADAPTIVE = { label: 'Adaptive', hint: 'a learned skill', color: '#d98a5b' }
+// Innate is the sun you were born under; adaptive is moonlight you learned to carry.
+const INNATE = { label: 'Innate', hint: "can't help it", color: '#c9a35a' }
+const ADAPTIVE = { label: 'Adaptive', hint: 'a learned skill', color: '#8f8a7c' }
 
 interface FilterStageProps {
   cards: Archetype[]
@@ -43,7 +44,7 @@ export function FilterStage({ cards, onComplete }: FilterStageProps) {
     const pile = phase.pile
     return (
       <StageLayout
-        eyebrow={`Stage 3 · Round ${phase.round}`}
+        eyebrow={`III · Round ${phase.round}`}
         title="Innate or Adaptive?"
         instruction="An innate archetype is one you can't help but live out. An adaptive one is a skill you've cultivated and are good at. Keep only the innate — they advance."
       >
@@ -62,17 +63,18 @@ export function FilterStage({ cards, onComplete }: FilterStageProps) {
 
   if (phase.kind === 'interstitial') {
     return (
-      <StageLayout eyebrow="Stage 3" title="Round complete">
+      <StageLayout eyebrow="III · The Narrowing" title="Round complete">
         <div className="flex max-w-sm flex-col items-center gap-6 text-center">
-          <p className="text-6xl font-semibold text-white tabular-nums">
+          <p className="gold-foil font-display text-7xl font-semibold tabular-nums">
             {phase.pile.length}
           </p>
-          <p className="text-sm text-white/60">
+          <OrnamentRule />
+          <p className="font-body text-[15px] leading-relaxed text-ivory/60">
             archetypes remain. Keep narrowing to the {TARGET} that are most deeply,
             innately you.
           </p>
           {phase.noProgress && (
-            <p className="rounded-xl bg-amber-400/10 px-4 py-2 text-xs text-amber-200/80">
+            <p className="border border-fam-creative/40 px-5 py-2.5 font-body text-[13px] text-fam-creative/90 italic">
               You kept them all. Be ruthless this round — which could you truly never
               switch off?
             </p>
@@ -81,7 +83,7 @@ export function FilterStage({ cards, onComplete }: FilterStageProps) {
             onClick={() =>
               setPhase({ kind: 'round', pile: phase.pile, round: phase.round })
             }
-            className="rounded-full bg-white px-8 py-3 font-semibold text-black transition hover:scale-105 active:scale-95"
+            className="btn-gold"
           >
             Next round
           </button>
@@ -119,7 +121,7 @@ function RescuePhase({
 
   return (
     <StageLayout
-      eyebrow="Stage 3 · Almost there"
+      eyebrow="III · Almost There"
       title={keep.length === 0 ? 'Pick your circle' : 'Top up your circle'}
       instruction={
         keep.length === 0
@@ -173,13 +175,13 @@ function Chip({
     <button
       onClick={onClick}
       disabled={disabled}
-      className={`rounded-full border px-3.5 py-1.5 text-sm font-medium transition ${
+      className={`font-body border px-3.5 py-1.5 text-[14px] transition ${
         disabled ? 'cursor-default' : 'hover:scale-105 active:scale-95'
       }`}
       style={{
-        borderColor: selected ? accent : 'rgba(255,255,255,0.15)',
-        background: selected ? `${accent}22` : 'transparent',
-        color: selected ? accent : 'rgba(255,255,255,0.7)',
+        borderColor: selected ? `${accent}cc` : 'rgba(201,163,90,0.25)',
+        background: selected ? `${accent}1f` : 'transparent',
+        color: selected ? accent : 'rgba(233,225,205,0.65)',
       }}
     >
       {archetype.name}
@@ -200,8 +202,8 @@ function FooterButton({
     <motion.button
       onClick={onClick}
       disabled={disabled}
-      whileTap={{ scale: 0.96 }}
-      className="mt-2 rounded-full bg-white px-8 py-3 font-semibold text-black transition enabled:hover:scale-105 disabled:opacity-40"
+      whileTap={{ scale: 0.97 }}
+      className="btn-gold mt-8"
     >
       {label}
     </motion.button>

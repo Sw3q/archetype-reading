@@ -83,12 +83,12 @@ function TopCard({
       <Card archetype={archetype} hint={hint} />
       {/* Color wash tied to drag direction */}
       <motion.div
-        className="pointer-events-none absolute inset-0 rounded-3xl"
-        style={{ background: right.color, opacity: yesOpacity }}
+        className="pointer-events-none absolute inset-0"
+        style={{ background: right.color, opacity: yesOpacity, mixBlendMode: 'soft-light' }}
       />
       <motion.div
-        className="pointer-events-none absolute inset-0 rounded-3xl"
-        style={{ background: left.color, opacity: noOpacity }}
+        className="pointer-events-none absolute inset-0"
+        style={{ background: left.color, opacity: noOpacity, mixBlendMode: 'soft-light' }}
       />
     </motion.div>
   )
@@ -152,14 +152,16 @@ export function SwipeStack({
   return (
     <div className="flex w-full flex-col items-center gap-6">
       {/* Progress */}
-      <div className="flex w-full max-w-sm items-center gap-3 text-xs text-white/50">
-        <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-white/10">
+      <div className="flex w-full max-w-sm items-center gap-3">
+        <div className="h-px flex-1 bg-gold/15">
           <div
-            className="h-full rounded-full bg-white/60 transition-all duration-300"
+            className="h-px bg-gold/70 transition-all duration-300"
             style={{ width: `${(index / cards.length) * 100}%` }}
           />
         </div>
-        <span className="tabular-nums">{remaining} left</span>
+        <span className="font-display text-[10px] tracking-[0.25em] text-gold/70 uppercase tabular-nums">
+          {remaining} left
+        </span>
       </div>
 
       {/* Card stack */}
@@ -203,36 +205,40 @@ export function SwipeStack({
 
       {/* Buttons */}
       <div className="flex flex-col items-center gap-3">
-        <div className="flex items-center gap-6">
+        <div className="flex items-center gap-7">
           <button
             data-testid="swipe-no"
             onClick={() => decide('left')}
-            className="flex h-16 w-16 items-center justify-center rounded-full border-2 text-2xl transition hover:scale-110 active:scale-95"
-            style={{ borderColor: left.color, color: left.color }}
+            className="flex h-16 w-16 items-center justify-center rounded-full border bg-ink/60 text-xl transition hover:scale-110 hover:bg-ink active:scale-95"
+            style={{ borderColor: `${left.color}88`, color: left.color }}
             aria-label={left.label}
           >
             ✕
           </button>
-          <div className="flex flex-col items-center gap-1 text-center text-[11px] text-white/40">
-            <span style={{ color: left.color }}>← {left.label}</span>
+          <div className="font-display flex flex-col items-center gap-1.5 text-center text-[10px] tracking-[0.2em] uppercase">
+            <span style={{ color: `${left.color}cc` }}>← {left.label}</span>
             <span style={{ color: right.color }}>{right.label} →</span>
           </div>
           <button
             data-testid="swipe-yes"
             onClick={() => decide('right')}
-            className="flex h-16 w-16 items-center justify-center rounded-full border-2 text-2xl transition hover:scale-110 active:scale-95"
-            style={{ borderColor: right.color, color: right.color }}
+            className="flex h-16 w-16 items-center justify-center rounded-full border bg-ink/60 text-xl transition hover:scale-110 hover:bg-ink active:scale-95"
+            style={{
+              borderColor: right.color,
+              color: right.color,
+              boxShadow: '0 0 24px -8px rgba(201,163,90,0.5)',
+            }}
             aria-label={right.label}
           >
             ✓
           </button>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <button
             data-testid="swipe-undo"
             onClick={undo}
             disabled={!canUndo}
-            className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-white/55 transition hover:bg-white/5 hover:text-white/80 disabled:pointer-events-none disabled:opacity-0"
+            className="font-body px-3 py-1.5 text-[13px] text-ivory/50 italic transition hover:text-gold-bright disabled:pointer-events-none disabled:opacity-0"
             aria-label="Undo last card"
           >
             ↶ Undo last card
@@ -241,7 +247,7 @@ export function SwipeStack({
             <button
               data-testid="swipe-skip"
               onClick={() => onSkip(result.current)}
-              className="rounded-full border border-white/15 px-3 py-1.5 text-xs font-medium text-white/60 transition hover:bg-white/5 hover:text-white/90"
+              className="font-display border border-gold/30 px-4 py-2 text-[10px] tracking-[0.2em] text-gold/80 uppercase transition hover:border-gold/60 hover:text-gold-bright"
             >
               {skipLabel} →
             </button>

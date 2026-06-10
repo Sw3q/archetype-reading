@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import type { Archetype } from './types'
 import { ARCHETYPES } from './data/archetypes'
-import { StageLayout } from './components/StageLayout'
+import { StageLayout, OrnamentRule } from './components/StageLayout'
 import { SwipeStack } from './components/SwipeStack'
 import { FilterStage } from './components/FilterStage'
 import { Roundtable } from './components/Roundtable'
@@ -15,10 +15,13 @@ type Stage =
   | { name: 'empty' }
 
 const TARGET = 8
-const ME = { label: 'This is me', hint: 'identify with it', color: '#6fc79a' }
-const NOT_ME = { label: 'Not me', hint: "doesn't fit", color: '#d95b5b' }
-const RECLAIM = { label: 'This is me too', hint: 'reclaim it', color: '#6fc79a' }
-const STILL_NOT = { label: 'Still not me', hint: 'leave it', color: '#d95b5b' }
+// Gold = claimed (the sun); ash = set aside (the waning moon).
+const GOLD = '#c9a35a'
+const ASH = '#8f8a7c'
+const ME = { label: 'This is me', hint: 'identify with it', color: GOLD }
+const NOT_ME = { label: 'Not me', hint: "doesn't fit", color: ASH }
+const RECLAIM = { label: 'This is me too', hint: 'reclaim it', color: GOLD }
+const STILL_NOT = { label: 'Still not me', hint: 'leave it', color: ASH }
 
 function shuffle<T>(arr: T[]): T[] {
   const a = [...arr]
@@ -65,7 +68,7 @@ export default function App() {
     case 'swipe':
       return (
         <StageLayout
-          eyebrow="Stage 1 · The Gallery"
+          eyebrow="I · The Gallery"
           title="This is me?"
           instruction="Go with your gut. Swipe right on every archetype you recognize in yourself, left on those you don't. Don't overthink it."
         >
@@ -85,7 +88,7 @@ export default function App() {
         route([...stage.kept, ...reclaimed])
       return (
         <StageLayout
-          eyebrow="Stage 2 · The Shadow"
+          eyebrow="II · The Shadow"
           title="Look again"
           instruction="These are the archetypes you passed over. Some you may have been reluctant — or unwilling — to claim. Swipe right on any that, honestly, are also you."
         >
@@ -116,14 +119,11 @@ export default function App() {
     case 'empty':
       return (
         <StageLayout
-          eyebrow="Stage 1"
+          eyebrow="I · The Gallery"
           title="No archetypes chosen"
           instruction="You swiped left on every card. The reading needs at least one archetype you identify with."
         >
-          <button
-            onClick={restart}
-            className="rounded-full bg-white px-8 py-3 font-semibold text-black transition hover:scale-105 active:scale-95"
-          >
+          <button onClick={restart} className="btn-gold">
             Try again
           </button>
         </StageLayout>
@@ -131,42 +131,115 @@ export default function App() {
   }
 }
 
+/** Eight-pointed star within engraved rings — the reading's sigil. */
+function Sigil() {
+  return (
+    <svg viewBox="0 0 120 120" className="h-20 w-20" aria-hidden>
+      <g fill="none" stroke="#c9a35a">
+        <circle cx="60" cy="60" r="56" strokeWidth="1" opacity="0.3" />
+        <circle cx="60" cy="60" r="50" strokeWidth="0.75" opacity="0.45" strokeDasharray="1 4" />
+        <path
+          d="M60 14 L67 53 L106 60 L67 67 L60 106 L53 67 L14 60 L53 53 Z"
+          strokeWidth="1.1"
+          opacity="0.9"
+        />
+        <path
+          d="M60 34 L65 55 L86 60 L65 65 L60 86 L55 65 L34 60 L55 55 Z"
+          strokeWidth="0.9"
+          opacity="0.55"
+          transform="rotate(45 60 60)"
+        />
+        <circle cx="60" cy="60" r="4" fill="#ecd296" stroke="none" opacity="0.95" />
+      </g>
+    </svg>
+  )
+}
+
+const MOVEMENTS = [
+  {
+    numeral: 'I',
+    title: 'The Gallery',
+    body: 'Swipe through the deck — keep the archetypes you recognize in yourself.',
+  },
+  {
+    numeral: 'II',
+    title: 'The Shadow',
+    body: 'Look back through the ones you passed over — reclaim any you were reluctant to admit.',
+  },
+  {
+    numeral: 'III',
+    title: 'Innate or Adaptive',
+    body: "Narrow the field to 8 — keep what you can't help being over what you've merely learned.",
+  },
+  {
+    numeral: 'IV',
+    title: 'The Roundtable',
+    body: 'Arrange your 8 around the table by closeness and alliance, then export the image.',
+  },
+]
+
 function Intro({ onBegin, count }: { onBegin: () => void; count: number }) {
   return (
-    <StageLayout eyebrow="A Reading In Four Movements" title="Archetypes">
-      <div className="flex max-w-md flex-col items-center gap-7 text-center">
-        <p className="text-sm leading-relaxed text-white/65">
+    <div className="starfield relative flex min-h-[100dvh] flex-col items-center justify-center px-6 py-14">
+      <div className="flex w-full max-w-4xl flex-col items-center text-center">
+        <div className="rise" style={{ animationDelay: '0.05s' }}>
+          <Sigil />
+        </div>
+
+        <div
+          className="rise mt-7 flex items-center justify-center gap-3"
+          style={{ animationDelay: '0.15s' }}
+        >
+          <span aria-hidden className="h-px w-12 bg-gradient-to-l from-gold/50 to-transparent sm:w-20" />
+          <p className="font-display text-[10px] font-medium tracking-[0.42em] whitespace-nowrap text-gold/80 uppercase sm:text-[11px]">
+            A Reading in Four Movements
+          </p>
+          <span aria-hidden className="h-px w-12 bg-gradient-to-r from-gold/50 to-transparent sm:w-20" />
+        </div>
+
+        <h1
+          className="gold-foil rise font-display mt-4 text-[2.05rem] font-semibold tracking-[0.14em] uppercase sm:text-5xl md:text-6xl"
+          style={{ animationDelay: '0.25s' }}
+        >
+          Archetypes
+        </h1>
+
+        <p
+          className="rise font-body mt-6 max-w-xl text-[17px] leading-relaxed text-ivory/65"
+          style={{ animationDelay: '0.35s' }}
+        >
           The archetypes are patterns that move power through your psyche. This is a
           fast, intuitive reading drawn from Caroline Myss's gallery of {count}{' '}
           archetypes — meet them, narrow them, and seat the few that are most truly you.
         </p>
-        <ol className="flex w-full flex-col gap-3 text-left">
-          <Step n={1} title="The Gallery" body="Swipe through the deck — keep the archetypes you recognize in yourself." />
-          <Step n={2} title="The Shadow" body="Look back through the ones you passed over — reclaim any you were reluctant to admit." />
-          <Step n={3} title="Innate or Adaptive" body="Narrow the field to 8 — keep what you can't help being over what you've merely learned." />
-          <Step n={4} title="The Roundtable" body="Arrange your 8 around the table by closeness and alliance, then export the image." />
-        </ol>
-        <button
-          onClick={onBegin}
-          className="rounded-full bg-white px-10 py-3.5 text-lg font-semibold text-black transition hover:scale-105 active:scale-95"
-        >
-          Begin the reading
-        </button>
-      </div>
-    </StageLayout>
-  )
-}
 
-function Step({ n, title, body }: { n: number; title: string; body: string }) {
-  return (
-    <li className="flex gap-3.5">
-      <span className="font-display flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/20 text-sm font-semibold text-white/80">
-        {n}
-      </span>
-      <div>
-        <p className="font-semibold text-white">{title}</p>
-        <p className="text-sm text-white/55">{body}</p>
+        <ol className="rise mt-10 grid w-full grid-cols-1 gap-3.5 text-left sm:grid-cols-2 lg:grid-cols-4" style={{ animationDelay: '0.45s' }}>
+          {MOVEMENTS.map((m) => (
+            <li key={m.numeral} className="tarot-frame bg-ink-2/60 px-5 pt-5 pb-6">
+              <p className="font-display text-xl text-gold/90">{m.numeral}</p>
+              <div aria-hidden className="mt-2.5 mb-3 h-px w-8 bg-gold/30" />
+              <p className="font-display text-[12px] font-semibold tracking-[0.14em] text-ivory uppercase">
+                {m.title}
+              </p>
+              <p className="font-body mt-2 text-[14px] leading-snug text-ivory/55">{m.body}</p>
+            </li>
+          ))}
+        </ol>
+
+        <div className="rise mt-10" style={{ animationDelay: '0.55s' }}>
+          <button onClick={onBegin} className="btn-gold">
+            Begin the reading
+          </button>
+        </div>
+
+        <p
+          className="rise font-body mt-7 text-[13px] text-ivory/35 italic"
+          style={{ animationDelay: '0.65s' }}
+        >
+          After the Gallery of Archetypes of Caroline Myss
+        </p>
+        <OrnamentRule className="rise mt-4 opacity-70" />
       </div>
-    </li>
+    </div>
   )
 }

@@ -9,7 +9,7 @@ export async function exportNodeAsPng(node: HTMLElement, filename = 'archetype-r
     pixelRatio: 2,
     cacheBust: true,
     // Match the app backdrop so the export isn't transparent.
-    backgroundColor: '#0c0a12',
+    backgroundColor: '#0b0908',
   })
   const link = document.createElement('a')
   link.download = filename
