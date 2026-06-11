@@ -34,8 +34,6 @@ const RINGS = [
   { r: 42, max: 1.08 },
   { r: 56, max: 0.72 },
 ]
-/** Released boxes whose edge gap is within this many table-% units ally. */
-const ALLY_GAP = 4.5
 
 function ringPos(ring: number, phi: number): { left: number; top: number } {
   const { r } = RINGS[ring]
@@ -45,6 +43,16 @@ function ringPos(ring: number, phi: number): { left: number; top: number } {
 const clampPhi = (ring: number, phi: number) =>
   Math.max(-RINGS[ring].max, Math.min(RINGS[ring].max, phi))
 
+/** SVG path for an orbit arc (shared by the engraving and the live highlight). */
+function arcPath(ring: number): string {
+  const { r, max } = RINGS[ring]
+  const x1 = YOU.x + r * Math.sin(-max)
+  const y1 = YOU.y - r * Math.cos(-max)
+  const x2 = YOU.x + r * Math.sin(max)
+  const y2 = YOU.y - r * Math.cos(max)
+  return `M ${x1} ${y1} A ${r} ${r} 0 0 1 ${x2} ${y2}`
+}
+
 /** A seat on the table: one card, or a stack (cards[0] = primary/top). */
 interface Seat {
   id: string
@@ -52,6 +60,25 @@ interface Seat {
   ring: number
   phi: number
 }
+
+/** Box of a seat in table-% units, plus its seat metadata. */
+interface SeatBox {
+  id: string
+  l: number
+  t: number
+  r: number
+  b: number
+  w: number
+  ring: number
+  phi: number
+}
+
+/** What releasing right now would do — computed live during the drag and
+ * reused verbatim on release, so the preview can never disagree with the act. */
+type DragIntent =
+  | { kind: 'stack'; targetId: string }
+  | { kind: 'ally'; targetId: string; side: -1 | 1; ring: number; phi: number; left: number; top: number }
+  | { kind: 'orbit'; ring: number; phi: number; left: number; top: number }
 
 /** Even spread of n seats across the outer orbits (guided mode's start). */
 function initialSeats(cards: Archetype[]): Seat[] {
@@ -87,19 +114,23 @@ function findFreeSlot(seats: Seat[]): { ring: number; phi: number } {
   return { ring: 3, phi: (Math.random() * 2 - 1) * RINGS[3].max }
 }
 
+/** Where a card snaps when allied beside a partner seat (with roomier-side flip). */
+function allyBeside(
+  partner: SeatBox,
+  draggedW: number,
+  preferSide: -1 | 1,
+): { side: -1 | 1; phi: number } {
+  const { r, max } = RINGS[partner.ring]
+  const dPhi = (partner.w / 2 + draggedW / 2 + 1.5) / r
+  let side = preferSide
+  if (Math.abs(partner.phi + side * dPhi) > max) side = side === 1 ? -1 : 1
+  return { side, phi: clampPhi(partner.ring, partner.phi + side * dPhi) }
+}
+
 /* ------------------------------------------------------------------ */
 
 /** Engraved table: four orbit arcs fanning out from the You seal. */
 function TableEngraving() {
-  const arc = (ring: number) => {
-    const { r, max } = RINGS[ring]
-    const x1 = YOU.x + r * Math.sin(-max)
-    const y1 = YOU.y - r * Math.cos(-max)
-    const x2 = YOU.x + r * Math.sin(max)
-    const y2 = YOU.y - r * Math.cos(max)
-    return `M ${x1} ${y1} A ${r} ${r} 0 0 1 ${x2} ${y2}`
-  }
-  // Tick marks along the outer arc.
   const ticks = Array.from({ length: 13 }, (_, i) => {
     const phi = -RINGS[3].max + (i / 12) * 2 * RINGS[3].max
     const r1 = RINGS[3].r + 2.2
@@ -114,10 +145,10 @@ function TableEngraving() {
   return (
     <svg viewBox="0 0 100 100" className="absolute inset-0 h-full w-full" aria-hidden>
       <g fill="none" stroke="#c9a35a">
-        <path d={arc(0)} strokeWidth="0.25" opacity="0.4" />
-        <path d={arc(1)} strokeWidth="0.25" opacity="0.32" />
-        <path d={arc(2)} strokeWidth="0.25" opacity="0.26" strokeDasharray="0.4 1.6" />
-        <path d={arc(3)} strokeWidth="0.25" opacity="0.32" />
+        <path d={arcPath(0)} strokeWidth="0.25" opacity="0.4" />
+        <path d={arcPath(1)} strokeWidth="0.25" opacity="0.32" />
+        <path d={arcPath(2)} strokeWidth="0.25" opacity="0.26" strokeDasharray="0.4 1.6" />
+        <path d={arcPath(3)} strokeWidth="0.25" opacity="0.32" />
         {ticks.map((t, i) => (
           <line key={i} {...t} strokeWidth="0.25" opacity="0.4" />
         ))}
@@ -129,6 +160,85 @@ function TableEngraving() {
         />
       </g>
     </svg>
+  )
+}
+
+/** Live snap cues drawn under the tokens while a card is being dragged. */
+function DragOverlay({
+  intent,
+  targets,
+  dragW,
+  dragH,
+}: {
+  intent: DragIntent
+  targets: SeatBox[]
+  dragW: number
+  dragH: number
+}) {
+  const target =
+    intent.kind !== 'orbit' ? targets.find((t) => t.id === intent.targetId) : undefined
+
+  return (
+    <>
+      {/* Destination orbit arc, brightened (orbit + ally both land on a ring). */}
+      {intent.kind !== 'stack' && (
+        <svg
+          viewBox="0 0 100 100"
+          className="pointer-events-none absolute inset-0 z-0 h-full w-full"
+          aria-hidden
+        >
+          <path d={arcPath(intent.ring)} fill="none" stroke="#ecd296" strokeWidth="1.4" opacity="0.18" />
+          <path d={arcPath(intent.ring)} fill="none" stroke="#ecd296" strokeWidth="0.4" opacity="0.85" />
+        </svg>
+      )}
+
+      {/* Stack: gold glow framing the target it will drop beneath. */}
+      {intent.kind === 'stack' && target && (
+        <div
+          aria-hidden
+          className="pointer-events-none absolute z-20 border border-gold-bright"
+          style={{
+            left: `${target.l}%`,
+            top: `${target.t}%`,
+            width: `${target.r - target.l}%`,
+            height: `${target.b - target.t}%`,
+            boxShadow: '0 0 0 1px rgba(236,210,150,0.5), 0 0 22px -2px rgba(236,210,150,0.7)',
+            background: 'rgba(236,210,150,0.08)',
+          }}
+        />
+      )}
+
+      {/* Alliance: luminous bar on the target edge the card will snap against. */}
+      {intent.kind === 'ally' && target && (
+        <div
+          aria-hidden
+          className="pointer-events-none absolute z-20 -translate-x-1/2"
+          style={{
+            left: `${intent.side < 0 ? target.l : target.r}%`,
+            top: `${target.t}%`,
+            height: `${target.b - target.t}%`,
+            width: '3px',
+            background: 'linear-gradient(180deg, transparent, #ecd296 18%, #ecd296 82%, transparent)',
+            boxShadow: '0 0 10px 1px rgba(236,210,150,0.85)',
+          }}
+        />
+      )}
+
+      {/* Ghost: dashed outline at the exact resting position & size. */}
+      {intent.kind !== 'stack' && (
+        <div
+          aria-hidden
+          className="pointer-events-none absolute z-0 -translate-x-1/2 -translate-y-1/2 border border-dashed border-gold-bright/70"
+          style={{
+            left: `${intent.left}%`,
+            top: `${intent.top}%`,
+            width: `${dragW}%`,
+            height: `${dragH}%`,
+            background: 'rgba(236,210,150,0.06)',
+          }}
+        />
+      )}
+    </>
   )
 }
 
@@ -220,6 +330,17 @@ export function Roundtable({
   /** Alliance edges between seat ids. */
   const [edges, setEdges] = useState<Array<[string, string]>>([])
 
+  // Live drag state. `dragCtx` snapshots the static boxes once at drag start
+  // (the other seats don't move), so the per-frame intent is pure math.
+  const dragCtx = useRef<{
+    rect: DOMRect
+    dragW: number
+    dragH: number
+    targets: SeatBox[]
+  } | null>(null)
+  const [intent, setIntent] = useState<DragIntent | null>(null)
+  const intentKey = useRef('')
+
   // Reconcile seats with the cards prop (mapping mode adds/removes cards).
   useEffect(() => {
     const ids = new Set(cards.map((c) => c.id))
@@ -239,92 +360,135 @@ export function Roundtable({
     })
   }, [cards])
 
-  /** Commit a seat's release: stack onto a target, ally with a neighbor, or
-   * settle onto the nearest orbit. */
-  function settleSeat(seatId: string, pointer: { x: number; y: number }) {
+  /** Snapshot the table + other seats' boxes at the start of a drag. */
+  function beginDrag(seatId: string) {
     const table = tableRef.current
     if (!table) return
     const rect = table.getBoundingClientRect()
-    const toUnits = (r: DOMRect) => ({
-      l: ((r.left - rect.left) / rect.width) * 100,
-      t: ((r.top - rect.top) / rect.height) * 100,
-      r: ((r.right - rect.left) / rect.width) * 100,
-      b: ((r.bottom - rect.top) / rect.height) * 100,
-      w: (r.width / rect.width) * 100,
-    })
-    const px = ((pointer.x - rect.left) / rect.width) * 100
-    const py = ((pointer.y - rect.top) / rect.height) * 100
-
-    const dragged = seats.find((s) => s.id === seatId)
-    if (!dragged) return
-    const draggedBox = seatEls.current.get(seatId)
-      ? toUnits(seatEls.current.get(seatId)!.getBoundingClientRect())
-      : null
-
-    // 1. Pointer released inside another seat → stack beneath it.
-    for (const other of seats) {
-      if (other.id === seatId) continue
-      const el = seatEls.current.get(other.id)
-      if (!el) continue
-      const b = toUnits(el.getBoundingClientRect())
-      if (px >= b.l && px <= b.r && py >= b.t && py <= b.b) {
-        setSeats((prev) =>
-          prev
-            .filter((s) => s.id !== seatId)
-            .map((s) =>
-              s.id === other.id ? { ...s, cards: [...s.cards, ...dragged.cards] } : s,
-            ),
-        )
-        setEdges((e) => e.filter(([a, b2]) => a !== seatId && b2 !== seatId))
-        return
+    const toBox = (el: HTMLElement) => {
+      const r = el.getBoundingClientRect()
+      return {
+        l: ((r.left - rect.left) / rect.width) * 100,
+        t: ((r.top - rect.top) / rect.height) * 100,
+        r: ((r.right - rect.left) / rect.width) * 100,
+        b: ((r.bottom - rect.top) / rect.height) * 100,
       }
     }
+    let dragW = 18
+    let dragH = 8
+    const targets: SeatBox[] = []
+    seatEls.current.forEach((el, id) => {
+      const box = toBox(el)
+      if (id === seatId) {
+        dragW = box.r - box.l
+        dragH = box.b - box.t
+        return
+      }
+      const s = seats.find((x) => x.id === id)
+      if (!s) return
+      targets.push({ id, ...box, w: box.r - box.l, ring: s.ring, phi: s.phi })
+    })
+    dragCtx.current = { rect, dragW, dragH, targets }
+    intentKey.current = ''
+  }
 
-    // 2. Released near another seat → snap beside it and record the alliance.
-    if (draggedBox) {
-      let nearest: { id: string; gap: number; box: ReturnType<typeof toUnits> } | null =
-        null
-      for (const other of seats) {
-        if (other.id === seatId) continue
-        const el = seatEls.current.get(other.id)
-        if (!el) continue
-        const b = toUnits(el.getBoundingClientRect())
-        const dx = Math.max(0, Math.max(draggedBox.l, b.l) - Math.min(draggedBox.r, b.r))
-        const dy = Math.max(0, Math.max(draggedBox.t, b.t) - Math.min(draggedBox.b, b.b))
-        const gap = Math.hypot(dx, dy)
-        if (gap <= ALLY_GAP && (!nearest || gap < nearest.gap)) {
-          nearest = { id: other.id, gap, box: b }
+  /** What releasing at `pointer` (viewport coords) would do. */
+  function computeIntent(pointer: { x: number; y: number }): DragIntent | null {
+    const ctx = dragCtx.current
+    if (!ctx) return null
+    const px = ((pointer.x - ctx.rect.left) / ctx.rect.width) * 100
+    const py = ((pointer.y - ctx.rect.top) / ctx.rect.height) * 100
+
+    // Target = the seat whose (slightly grown) box the pointer sits in,
+    // nearest-center wins when several overlap.
+    let target: SeatBox | null = null
+    let best = Infinity
+    for (const t of ctx.targets) {
+      const mx = (t.r - t.l) * 0.18
+      const my = (t.b - t.t) * 0.4
+      if (px >= t.l - mx && px <= t.r + mx && py >= t.t - my && py <= t.b + my) {
+        const d = Math.hypot(px - (t.l + t.r) / 2, py - (t.t + t.b) / 2)
+        if (d < best) {
+          best = d
+          target = t
         }
       }
-      if (nearest) {
-        const partner = seats.find((s) => s.id === nearest!.id)!
-        const { r, max } = RINGS[partner.ring]
-        const dPhi = (nearest.box.w / 2 + draggedBox.w / 2 + 1.5) / r
-        // Snap to the pointer's side, but flip if that side has no room left
-        // on the arc (so an allied card never gets crushed against the edge).
-        let side = px >= (nearest.box.l + nearest.box.r) / 2 ? 1 : -1
-        if (Math.abs(partner.phi + side * dPhi) > max) side = -side
-        const phi = clampPhi(partner.ring, partner.phi + side * dPhi)
-        setSeats((prev) =>
-          prev.map((s) => (s.id === seatId ? { ...s, ring: partner.ring, phi } : s)),
-        )
-        setEdges((e) => [
-          ...e.filter(([a, b2]) => a !== seatId && b2 !== seatId),
-          [seatId, nearest.id],
-        ])
-        return
-      }
     }
 
-    // 3. Settle onto the orbit nearest the release point; alliances dissolve.
+    if (target) {
+      const frac = (px - target.l) / (target.r - target.l)
+      // Centre band stacks; the outer thirds ally on that side.
+      if (frac > 0.32 && frac < 0.68) return { kind: 'stack', targetId: target.id }
+      const { side, phi } = allyBeside(target, ctx.dragW, frac <= 0.32 ? -1 : 1)
+      const pos = ringPos(target.ring, phi)
+      return { kind: 'ally', targetId: target.id, side, ring: target.ring, phi, left: pos.left, top: pos.top }
+    }
+
+    // No target → settle onto the nearest orbit.
     const dist = Math.hypot(px - YOU.x, py - YOU.y)
     let ring = 0
     for (let i = 1; i < RINGS.length; i++) {
       if (Math.abs(dist - RINGS[i].r) < Math.abs(dist - RINGS[ring].r)) ring = i
     }
     const phi = clampPhi(ring, Math.atan2(px - YOU.x, YOU.y - py))
-    setSeats((prev) => prev.map((s) => (s.id === seatId ? { ...s, ring, phi } : s)))
-    setEdges((e) => e.filter(([a, b2]) => a !== seatId && b2 !== seatId))
+    const pos = ringPos(ring, phi)
+    return { kind: 'orbit', ring, phi, left: pos.left, top: pos.top }
+  }
+
+  /** Per-frame preview update — only re-renders when the intent changes shape. */
+  function updateDrag(pointer: { x: number; y: number }) {
+    const next = computeIntent(pointer)
+    const key = !next
+      ? ''
+      : next.kind === 'stack'
+        ? `s:${next.targetId}`
+        : next.kind === 'ally'
+          ? `a:${next.targetId}:${next.side}`
+          : `o:${next.ring}:${Math.round(next.phi * 50)}`
+    if (key === intentKey.current) return
+    intentKey.current = key
+    setIntent(next)
+  }
+
+  /** Commit the snapped intent on release. */
+  function endDrag(seatId: string, pointer: { x: number; y: number }) {
+    const decided = computeIntent(pointer)
+    dragCtx.current = null
+    setIntent(null)
+    intentKey.current = ''
+    if (!decided) return
+    const dragged = seats.find((s) => s.id === seatId)
+    if (!dragged) return
+
+    if (decided.kind === 'stack') {
+      setSeats((prev) =>
+        prev
+          .filter((s) => s.id !== seatId)
+          .map((s) =>
+            s.id === decided.targetId
+              ? { ...s, cards: [...s.cards, ...dragged.cards] }
+              : s,
+          ),
+      )
+      setEdges((e) => e.filter(([a, b]) => a !== seatId && b !== seatId))
+    } else if (decided.kind === 'ally') {
+      setSeats((prev) =>
+        prev.map((s) =>
+          s.id === seatId ? { ...s, ring: decided.ring, phi: decided.phi } : s,
+        ),
+      )
+      setEdges((e) => [
+        ...e.filter(([a, b]) => a !== seatId && b !== seatId),
+        [seatId, decided.targetId],
+      ])
+    } else {
+      setSeats((prev) =>
+        prev.map((s) =>
+          s.id === seatId ? { ...s, ring: decided.ring, phi: decided.phi } : s,
+        ),
+      )
+      setEdges((e) => e.filter(([a, b]) => a !== seatId && b !== seatId))
+    }
   }
 
   function promote(seatId: string, cardId: string) {
@@ -405,6 +569,16 @@ export function Roundtable({
     })
     .filter(Boolean) as { key: string; left: number; top: number }[]
 
+  const instruction = (
+    <>
+      Place each card on an orbit —{' '}
+      <span className="text-gold-bright/90">Ring 1, beside You, is what you are most</span>.
+      Drop a card <span className="text-gold-bright/90">over the centre of another to stack</span>{' '}
+      derivatives, or <span className="text-gold-bright/90">against its edge to ally them</span>.
+      A lit edge or glow shows what will happen before you let go.
+    </>
+  )
+
   return (
     <div className="starfield flex h-[100dvh] flex-col items-center overflow-y-auto px-5 py-5">
       <header className="mb-3 max-w-xl shrink-0 text-center">
@@ -416,23 +590,7 @@ export function Roundtable({
         </h1>
         <OrnamentRule className="mt-3" />
         <p className="mx-auto mt-2.5 max-w-md font-body text-[15px] leading-snug text-ivory/60">
-          {editable ? (
-            <>
-              Search the deck, then place each card on an orbit —{' '}
-              <span className="text-gold-bright/90">Ring 1, beside You, is what you are most</span>.
-              Drop a card <span className="text-gold-bright/90">onto another to stack</span>{' '}
-              derivatives (tap a name to bring it to the top); release it{' '}
-              <span className="text-gold-bright/90">touching a neighbour to ally them</span>.
-            </>
-          ) : (
-            <>
-              Place each archetype on an orbit —{' '}
-              <span className="text-gold-bright/90">Ring 1, beside You, is what you are most</span>.
-              Drop a card <span className="text-gold-bright/90">onto another to stack</span>{' '}
-              derivatives (tap a name to bring it to the top); release it{' '}
-              <span className="text-gold-bright/90">touching a neighbour to ally them</span>.
-            </>
-          )}
+          {editable ? <>Search the deck, then place each card. {instruction}</> : instruction}
         </p>
       </header>
 
@@ -459,6 +617,16 @@ export function Roundtable({
           <p className="absolute inset-x-8 top-[36%] text-center font-body text-[15px] text-ivory/40 italic">
             Search the deck above to seat the first archetype from your reading.
           </p>
+        )}
+
+        {/* Live snap cues (only while dragging) */}
+        {intent && dragCtx.current && (
+          <DragOverlay
+            intent={intent}
+            targets={dragCtx.current.targets}
+            dragW={dragCtx.current.dragW}
+            dragH={dragCtx.current.dragH}
+          />
         )}
 
         {/* Alliance midpoint marks */}
@@ -496,7 +664,9 @@ export function Roundtable({
               if (el) seatEls.current.set(seat.id, el)
               else seatEls.current.delete(seat.id)
             }}
-            onSettle={settleSeat}
+            onBegin={beginDrag}
+            onMove={updateDrag}
+            onSettle={endDrag}
             onPromote={(cardId) => promote(seat.id, cardId)}
             onRemoveCard={editable ? (cardId) => editable.onRemove(cardId) : undefined}
             hideRemove={exporting}
@@ -535,6 +705,8 @@ function SeatToken({
   byId,
   constraintsRef,
   registerEl,
+  onBegin,
+  onMove,
   onSettle,
   onPromote,
   onRemoveCard,
@@ -544,6 +716,8 @@ function SeatToken({
   byId: Map<string, Archetype>
   constraintsRef: React.RefObject<HTMLDivElement | null>
   registerEl: (el: HTMLElement | null) => void
+  onBegin: (seatId: string) => void
+  onMove: (pointer: { x: number; y: number }) => void
   onSettle: (seatId: string, pointer: { x: number; y: number }) => void
   onPromote: (cardId: string) => void
   /** Present in mapping mode: unseat one card. */
@@ -574,7 +748,9 @@ function SeatToken({
       onDragStart={() => {
         dragging.current = true
         setActive(true)
+        onBegin(seat.id)
       }}
+      onDrag={(_e, info) => onMove(info.point)}
       onDragEnd={(_e, info) => {
         setActive(false)
         onSettle(seat.id, info.point)

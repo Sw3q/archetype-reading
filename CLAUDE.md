@@ -87,12 +87,19 @@ bottom (`YOU = {x:50, y:86}` in table-%). Three discrete structures:
 - **Orbits**: four concentric arcs (`RINGS`, ring 0 = innermost/strongest identification →
   ring 3 = outer rim). On `onDragEnd`, `settleSeat()` snaps the seat to the nearest ring
   and a free angle `phi` along it (clamped to that ring's `max` so tokens stay on-table).
-- **Stacks**: dropping a seat *inside* another merges it beneath (the target stays primary —
-  `cards[0]`). Tapping a non-primary card promotes it. A stack is one seat (one
-  `[data-token-id]`, N `[data-card-id]`), modeling "derivatives that fuel the top card".
-- **Alliances**: releasing a seat *near but not on* another snaps it beside (same ring) and
-  records an undirected edge in `edges`; a gold diamond marks the midpoint. Settling onto an
-  orbit elsewhere dissolves the seat's alliances.
+- **Stacks**: releasing a seat over the **centre band** of another merges it beneath (the
+  target stays primary — `cards[0]`). Tapping a non-primary card promotes it. A stack is one
+  seat (one `[data-token-id]`, N `[data-card-id]`), modeling "derivatives that fuel the top".
+- **Alliances**: releasing over a target's **left/right edge third** snaps the seat beside it
+  (same ring) and records an undirected edge in `edges`; a gold diamond marks the midpoint.
+  Settling onto an orbit elsewhere dissolves the seat's alliances.
+
+`computeIntent(pointer)` is the single source of truth for what a release will do — stack /
+ally(side) / orbit(ring,phi). It runs **live during the drag** (`onDrag`, throttled by an
+intent-key) to drive `DragOverlay`'s four cues (stack glow, alliance edge bar, brightened
+destination arc, dashed snap-ghost) **and** verbatim on `onDragEnd` to commit, so the preview
+can never disagree with the act. The other seats' boxes are snapshotted once in `dragCtx` at
+`onDragStart` (they don't move), so per-frame intent is pure math — no layout thrash.
 
 State is real React state (`seats`, `edges`) — not framer-motion internals — so there is no
 DOM measurement at prompt time. Drag uses a controlled `x`/`y` motion value that is **zeroed
