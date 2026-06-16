@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { motion, useMotionValue } from 'framer-motion'
 import type { Archetype } from '../types'
 import { ARCHETYPES } from '../data/archetypes'
@@ -21,36 +21,147 @@ interface RoundtableProps {
 }
 
 /* ------------------------------------------------------------------ *
- * Polar geometry: four orbits around the You seal at the table bottom.
- * All units are percentages of the table's width/height.
+ * Layouts. A seat's canonical state is { ring, phi } — a discrete orbit
+ * tier (0 = innermost / most identified) and an angle measured clockwise
+ * from straight-up around that layout's ring centre. Each layout is just a
+ * projection of (ring, phi) → table-%, so switching tabs redraws the same
+ * reading in a new geometry while every snap/stack/ally rule is preserved.
+ * All units are percentages of the (square) table.
  * ------------------------------------------------------------------ */
 
-const YOU = { x: 50, y: 86 }
-/** Orbit radius + max angle (radians, measured from straight-up) that keeps
- * a token inside the table bounds on that orbit. */
-const RINGS = [
-  { r: 14, max: 0.78 },
-  { r: 28, max: 1.21 },
-  { r: 42, max: 1.08 },
-  { r: 56, max: 0.72 },
-]
+const FULL = Math.PI
 
-function ringPos(ring: number, phi: number): { left: number; top: number } {
-  const { r } = RINGS[ring]
-  return { left: YOU.x + r * Math.sin(phi), top: YOU.y - r * Math.cos(phi) }
+interface Ring {
+  r: number
+  /** Max |phi| allowed on this ring (FULL = a complete circle). */
+  max: number
 }
 
-const clampPhi = (ring: number, phi: number) =>
-  Math.max(-RINGS[ring].max, Math.min(RINGS[ring].max, phi))
+interface Layout {
+  id: 'round' | 'wheel' | 'fan'
+  label: string
+  howTo: ReactNode
+  shape: 'circle' | 'arc'
+  /** Centre the orbits are drawn around. */
+  center: { x: number; y: number }
+  /** Where the "You" seal sits. */
+  you: { x: number; y: number }
+  rings: Ring[]
+  /** Optional decorative star (omitted when the You seal occupies the centre). */
+  star?: { x: number; y: number }
+}
 
-/** SVG path for an orbit arc (shared by the engraving and the live highlight). */
-function arcPath(ring: number): string {
-  const { r, max } = RINGS[ring]
-  const x1 = YOU.x + r * Math.sin(-max)
-  const y1 = YOU.y - r * Math.cos(-max)
-  const x2 = YOU.x + r * Math.sin(max)
-  const y2 = YOU.y - r * Math.cos(max)
-  return `M ${x1} ${y1} A ${r} ${r} 0 0 1 ${x2} ${y2}`
+const gold = (s: ReactNode) => <span className="text-gold-bright/90">{s}</span>
+const STACK_ALLY = (
+  <>
+    Drop a card {gold('over the centre of another to stack')} a derivative, or{' '}
+    {gold('against its edge to ally')} them.
+  </>
+)
+
+const LAYOUTS: Layout[] = [
+  {
+    id: 'round',
+    label: 'Round Table',
+    howTo: (
+      <>
+        You are seated at the table. Set what is {gold('most core to you toward the centre')},
+        the rest toward the rim. {STACK_ALLY}
+      </>
+    ),
+    shape: 'circle',
+    center: { x: 50, y: 45 },
+    you: { x: 50, y: 93 },
+    rings: [
+      { r: 9, max: FULL },
+      { r: 18, max: FULL },
+      { r: 26, max: FULL },
+      { r: 34, max: FULL },
+    ],
+    star: { x: 50, y: 45 },
+  },
+  {
+    id: 'wheel',
+    label: 'Wheel',
+    howTo: (
+      <>
+        You sit at the centre. Ring the archetypes around you — {gold('what you are most, closest in')},
+        the rest toward the rim. {STACK_ALLY}
+      </>
+    ),
+    shape: 'circle',
+    center: { x: 50, y: 50 },
+    you: { x: 50, y: 50 },
+    rings: [
+      { r: 12, max: FULL },
+      { r: 20, max: FULL },
+      { r: 27, max: FULL },
+      { r: 34, max: FULL },
+    ],
+  },
+  {
+    id: 'fan',
+    label: 'Fan',
+    howTo: (
+      <>
+        You sit at the foot of the table. Place {gold('those you identify with most nearest you')},
+        the rest fanned above. {STACK_ALLY}
+      </>
+    ),
+    shape: 'arc',
+    center: { x: 50, y: 86 },
+    you: { x: 50, y: 86 },
+    rings: [
+      { r: 14, max: 0.78 },
+      { r: 28, max: 1.21 },
+      { r: 42, max: 1.08 },
+      { r: 56, max: 0.72 },
+    ],
+    star: { x: 50, y: 12 },
+  },
+]
+
+function clampPhi(layout: Layout, ring: number, phi: number): number {
+  const m = layout.rings[ring].max
+  return Math.max(-m, Math.min(m, phi))
+}
+
+function posOf(layout: Layout, ring: number, phi: number): { left: number; top: number } {
+  const { r } = layout.rings[ring]
+  const p = clampPhi(layout, ring, phi)
+  return { left: layout.center.x + r * Math.sin(p), top: layout.center.y - r * Math.cos(p) }
+}
+
+/** Nearest ring + angle for a point (table-%) — used when settling a drag. */
+function pointToRingPhi(layout: Layout, px: number, py: number): { ring: number; phi: number } {
+  const dx = px - layout.center.x
+  const dy = py - layout.center.y
+  const dist = Math.hypot(dx, dy)
+  let ring = 0
+  for (let i = 1; i < layout.rings.length; i++) {
+    if (Math.abs(dist - layout.rings[i].r) < Math.abs(dist - layout.rings[ring].r)) ring = i
+  }
+  return { ring, phi: clampPhi(layout, ring, Math.atan2(dx, -dy)) }
+}
+
+/** SVG outline for one ring (full circle or partial arc). */
+function ringOutline(
+  layout: Layout,
+  ring: number,
+  props: React.SVGProps<SVGPathElement & SVGCircleElement>,
+) {
+  const { r, max } = layout.rings[ring]
+  const c = layout.center
+  if (layout.shape === 'circle') return <circle cx={c.x} cy={c.y} r={r} {...props} />
+  const x1 = c.x + r * Math.sin(-max)
+  const y1 = c.y - r * Math.cos(-max)
+  const x2 = c.x + r * Math.sin(max)
+  const y2 = c.y - r * Math.cos(max)
+  return <path d={`M ${x1} ${y1} A ${r} ${r} 0 0 1 ${x2} ${y2}`} {...props} />
+}
+
+function starPath(x: number, y: number, R = 6, r = 2.1): string {
+  return `M ${x} ${y - R} L ${x + r} ${y - r} L ${x + R} ${y} L ${x + r} ${y + r} L ${x} ${y + R} L ${x - r} ${y + r} L ${x - R} ${y} L ${x - r} ${y - r} Z`
 }
 
 /** A seat on the table: one card, or a stack (cards[0] = primary/top). */
@@ -81,13 +192,13 @@ type DragIntent =
   | { kind: 'orbit'; ring: number; phi: number; left: number; top: number }
 
 /** Even spread of n seats across the outer orbits (guided mode's start). */
-function initialSeats(cards: Archetype[]): Seat[] {
+function initialSeats(layout: Layout, cards: Archetype[]): Seat[] {
   const seats: Seat[] = []
   const place = (ids: string[], ring: number) => {
-    const { max } = RINGS[ring]
+    const span = Math.min(layout.rings[ring].max * 0.9, FULL * 0.82)
     ids.forEach((id, i) => {
       const t = ids.length === 1 ? 0.5 : i / (ids.length - 1)
-      seats.push({ id, cards: [id], ring, phi: (t * 2 - 1) * max * 0.82 })
+      seats.push({ id, cards: [id], ring, phi: (t * 2 - 1) * span })
     })
   }
   const ids = cards.map((c) => c.id)
@@ -98,66 +209,70 @@ function initialSeats(cards: Archetype[]): Seat[] {
 }
 
 /** First uncrowded slot for a new seat, scanning outer orbits inward. */
-function findFreeSlot(seats: Seat[]): { ring: number; phi: number } {
-  for (let ring = 3; ring >= 0; ring--) {
-    const { r, max } = RINGS[ring]
-    const sep = 26 / r // ≈ one token width of angular separation
+function findFreeSlot(layout: Layout, seats: Seat[]): { ring: number; phi: number } {
+  for (let ring = layout.rings.length - 1; ring >= 0; ring--) {
+    const { r, max } = layout.rings[ring]
+    const sep = 24 / r // ≈ one token width of angular separation
     const taken = seats.filter((s) => s.ring === ring).map((s) => s.phi)
-    for (let k = 0; k < 24; k++) {
-      // 0, +step, -step, +2·step… fanning out from the top of the arc.
-      // Step must exceed the separation or consecutive candidates collide.
-      const phi = (k % 2 === 0 ? 1 : -1) * Math.ceil(k / 2) * (sep * 1.1)
+    for (let k = 0; k < 36; k++) {
+      const phi = (k % 2 === 0 ? 1 : -1) * Math.ceil(k / 2) * (sep * 1.05)
       if (Math.abs(phi) > max) break
       if (taken.every((t) => Math.abs(t - phi) >= sep)) return { ring, phi }
     }
   }
-  return { ring: 3, phi: (Math.random() * 2 - 1) * RINGS[3].max }
+  return { ring: layout.rings.length - 1, phi: (Math.random() * 2 - 1) * layout.rings[layout.rings.length - 1].max }
 }
 
 /** Where a card snaps when allied beside a partner seat (with roomier-side flip). */
 function allyBeside(
+  layout: Layout,
   partner: SeatBox,
   draggedW: number,
   preferSide: -1 | 1,
 ): { side: -1 | 1; phi: number } {
-  const { r, max } = RINGS[partner.ring]
+  const { r, max } = layout.rings[partner.ring]
   const dPhi = (partner.w / 2 + draggedW / 2 + 1.5) / r
   let side = preferSide
   if (Math.abs(partner.phi + side * dPhi) > max) side = side === 1 ? -1 : 1
-  return { side, phi: clampPhi(partner.ring, partner.phi + side * dPhi) }
+  return { side, phi: clampPhi(layout, partner.ring, partner.phi + side * dPhi) }
 }
 
 /* ------------------------------------------------------------------ */
 
-/** Engraved table: four orbit arcs fanning out from the You seal. */
-function TableEngraving() {
-  const ticks = Array.from({ length: 13 }, (_, i) => {
-    const phi = -RINGS[3].max + (i / 12) * 2 * RINGS[3].max
-    const r1 = RINGS[3].r + 2.2
-    const r2 = RINGS[3].r + (i % 3 === 0 ? 4.4 : 3.2)
+/** Engraved table: orbit rings, tick marks, optional central star. */
+function TableEngraving({ layout }: { layout: Layout }) {
+  const c = layout.center
+  const outer = layout.rings[layout.rings.length - 1]
+  const tickCount = layout.shape === 'circle' ? 24 : 13
+  const ticks = Array.from({ length: tickCount }, (_, i) => {
+    const phi =
+      layout.shape === 'circle'
+        ? (i / tickCount) * 2 * Math.PI
+        : -outer.max + (i / (tickCount - 1)) * 2 * outer.max
+    const r1 = outer.r + 2.0
+    const r2 = outer.r + (i % 3 === 0 ? 4.2 : 3.0)
     return {
-      x1: YOU.x + r1 * Math.sin(phi),
-      y1: YOU.y - r1 * Math.cos(phi),
-      x2: YOU.x + r2 * Math.sin(phi),
-      y2: YOU.y - r2 * Math.cos(phi),
+      x1: c.x + r1 * Math.sin(phi),
+      y1: c.y - r1 * Math.cos(phi),
+      x2: c.x + r2 * Math.sin(phi),
+      y2: c.y - r2 * Math.cos(phi),
     }
   })
   return (
     <svg viewBox="0 0 100 100" className="absolute inset-0 h-full w-full" aria-hidden>
       <g fill="none" stroke="#c9a35a">
-        <path d={arcPath(0)} strokeWidth="0.25" opacity="0.4" />
-        <path d={arcPath(1)} strokeWidth="0.25" opacity="0.32" />
-        <path d={arcPath(2)} strokeWidth="0.25" opacity="0.26" strokeDasharray="0.4 1.6" />
-        <path d={arcPath(3)} strokeWidth="0.25" opacity="0.32" />
+        {layout.rings.map((_, i) =>
+          ringOutline(layout, i, {
+            key: i,
+            strokeWidth: 0.25,
+            opacity: 0.42 - i * 0.045,
+            strokeDasharray: i === 2 ? '0.4 1.6' : undefined,
+          }),
+        )}
         {ticks.map((t, i) => (
           <line key={i} {...t} strokeWidth="0.25" opacity="0.4" />
         ))}
-        {/* Eight-pointed star in the upper void */}
-        <path
-          d="M50 10 L51.4 14.6 L56 16 L51.4 17.4 L50 22 L48.6 17.4 L44 16 L48.6 14.6 Z"
-          strokeWidth="0.3"
-          opacity="0.35"
-        />
+        {layout.star && <path d={starPath(layout.star.x, layout.star.y)} strokeWidth="0.3" opacity="0.4" />}
       </g>
     </svg>
   )
@@ -165,11 +280,13 @@ function TableEngraving() {
 
 /** Live snap cues drawn under the tokens while a card is being dragged. */
 function DragOverlay({
+  layout,
   intent,
   targets,
   dragW,
   dragH,
 }: {
+  layout: Layout
   intent: DragIntent
   targets: SeatBox[]
   dragW: number
@@ -180,15 +297,15 @@ function DragOverlay({
 
   return (
     <>
-      {/* Destination orbit arc, brightened (orbit + ally both land on a ring). */}
+      {/* Destination orbit, brightened (orbit + ally both land on a ring). */}
       {intent.kind !== 'stack' && (
         <svg
           viewBox="0 0 100 100"
           className="pointer-events-none absolute inset-0 z-0 h-full w-full"
           aria-hidden
         >
-          <path d={arcPath(intent.ring)} fill="none" stroke="#ecd296" strokeWidth="1.4" opacity="0.18" />
-          <path d={arcPath(intent.ring)} fill="none" stroke="#ecd296" strokeWidth="0.4" opacity="0.85" />
+          {ringOutline(layout, intent.ring, { stroke: '#ecd296', strokeWidth: 1.4, opacity: 0.16, fill: 'none' })}
+          {ringOutline(layout, intent.ring, { stroke: '#ecd296', strokeWidth: 0.4, opacity: 0.85, fill: 'none' })}
         </svg>
       )}
 
@@ -325,8 +442,13 @@ export function Roundtable({
   const [done, setDone] = useState(false)
   const [copied, setCopied] = useState(false)
 
+  const [layoutId, setLayoutId] = useState<Layout['id']>('round')
+  const layout = useMemo(() => LAYOUTS.find((l) => l.id === layoutId)!, [layoutId])
+
   const byId = useMemo(() => new Map(ARCHETYPES.map((a) => [a.id, a])), [])
-  const [seats, setSeats] = useState<Seat[]>(() => (editable ? [] : initialSeats(cards)))
+  const [seats, setSeats] = useState<Seat[]>(() =>
+    editable ? [] : initialSeats(LAYOUTS[0], cards),
+  )
   /** Alliance edges between seat ids. */
   const [edges, setEdges] = useState<Array<[string, string]>>([])
 
@@ -351,13 +473,15 @@ export function Roundtable({
       const seated = new Set(next.flatMap((s) => s.cards))
       for (const c of cards) {
         if (!seated.has(c.id)) {
-          next = [...next, { id: c.id, cards: [c.id], ...findFreeSlot(next) }]
+          next = [...next, { id: c.id, cards: [c.id], ...findFreeSlot(layout, next) }]
         }
       }
       const alive = new Set(next.map((s) => s.id))
       setEdges((e) => e.filter(([a, b]) => alive.has(a) && alive.has(b)))
       return next
     })
+    // layout intentionally excluded: re-seating only follows card changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cards])
 
   /** Snapshot the table + other seats' boxes at the start of a drag. */
@@ -419,19 +543,14 @@ export function Roundtable({
       const frac = (px - target.l) / (target.r - target.l)
       // Centre band stacks; the outer thirds ally on that side.
       if (frac > 0.32 && frac < 0.68) return { kind: 'stack', targetId: target.id }
-      const { side, phi } = allyBeside(target, ctx.dragW, frac <= 0.32 ? -1 : 1)
-      const pos = ringPos(target.ring, phi)
+      const { side, phi } = allyBeside(layout, target, ctx.dragW, frac <= 0.32 ? -1 : 1)
+      const pos = posOf(layout, target.ring, phi)
       return { kind: 'ally', targetId: target.id, side, ring: target.ring, phi, left: pos.left, top: pos.top }
     }
 
     // No target → settle onto the nearest orbit.
-    const dist = Math.hypot(px - YOU.x, py - YOU.y)
-    let ring = 0
-    for (let i = 1; i < RINGS.length; i++) {
-      if (Math.abs(dist - RINGS[i].r) < Math.abs(dist - RINGS[ring].r)) ring = i
-    }
-    const phi = clampPhi(ring, Math.atan2(px - YOU.x, YOU.y - py))
-    const pos = ringPos(ring, phi)
+    const { ring, phi } = pointToRingPhi(layout, px, py)
+    const pos = posOf(layout, ring, phi)
     return { kind: 'orbit', ring, phi, left: pos.left, top: pos.top }
   }
 
@@ -557,42 +676,56 @@ export function Roundtable({
     setTimeout(() => setCopied(false), 2500)
   }
 
-  // Alliance midpoint markers, derived from seat positions.
+  // Alliance midpoint markers, derived from seat positions in the active layout.
   const allianceMarks = edges
     .map(([a, b]) => {
       const sa = seats.find((s) => s.id === a)
       const sb = seats.find((s) => s.id === b)
       if (!sa || !sb) return null
-      const pa = ringPos(sa.ring, sa.phi)
-      const pb = ringPos(sb.ring, sb.phi)
+      const pa = posOf(layout, sa.ring, sa.phi)
+      const pb = posOf(layout, sb.ring, sb.phi)
       return { key: `${a}-${b}`, left: (pa.left + pb.left) / 2, top: (pa.top + pb.top) / 2 }
     })
     .filter(Boolean) as { key: string; left: number; top: number }[]
 
-  const instruction = (
-    <>
-      Place each card on an orbit —{' '}
-      <span className="text-gold-bright/90">Ring 1, beside You, is what you are most</span>.
-      Drop a card <span className="text-gold-bright/90">over the centre of another to stack</span>{' '}
-      derivatives, or <span className="text-gold-bright/90">against its edge to ally them</span>.
-      A lit edge or glow shows what will happen before you let go.
-    </>
-  )
-
   return (
-    <div className="starfield flex h-[100dvh] flex-col items-center overflow-y-auto px-5 py-5">
-      <header className="mb-3 max-w-xl shrink-0 text-center">
+    <div className="starfield flex h-[100dvh] flex-col items-center overflow-y-auto px-5 py-4">
+      <header className="mb-2 max-w-xl shrink-0 text-center">
         <p className="font-display text-[10px] font-medium tracking-[0.42em] text-gold/75 uppercase">
           {editable ? 'The Roundtable · Mapped by Hand' : 'IV · The Roundtable'}
         </p>
-        <h1 className="font-display mt-2.5 text-[1.65rem] leading-tight font-semibold tracking-[0.08em] text-ivory uppercase sm:text-3xl">
+        <h1 className="font-display mt-2 text-[1.5rem] leading-tight font-semibold tracking-[0.08em] text-ivory uppercase sm:text-3xl">
           {editable ? 'Map your table' : 'Seat your archetypes'}
         </h1>
-        <OrnamentRule className="mt-3" />
-        <p className="mx-auto mt-2.5 max-w-md font-body text-[15px] leading-snug text-ivory/60">
-          {editable ? <>Search the deck, then place each card. {instruction}</> : instruction}
-        </p>
+        <OrnamentRule className="mt-2" />
       </header>
+
+      {/* Layout tabs */}
+      <div role="tablist" aria-label="Table layout" className="mb-2 flex shrink-0 items-center gap-1.5">
+        {LAYOUTS.map((l) => {
+          const selected = l.id === layoutId
+          return (
+            <button
+              key={l.id}
+              role="tab"
+              aria-selected={selected}
+              onClick={() => setLayoutId(l.id)}
+              className={`font-display border px-3.5 py-1.5 text-[10px] tracking-[0.18em] uppercase transition ${
+                selected
+                  ? 'border-gold/70 bg-gold/10 text-gold-bright'
+                  : 'border-gold/20 text-ivory/55 hover:border-gold/45 hover:text-ivory/80'
+              }`}
+            >
+              {l.label}
+            </button>
+          )
+        })}
+      </div>
+
+      <p className="mx-auto mb-3 max-w-md shrink-0 text-center font-body text-[14px] leading-snug text-ivory/60">
+        {editable && <>Search the deck, then place each card. </>}
+        {layout.howTo}
+      </p>
 
       {editable && (
         <ArchetypeSearch
@@ -604,17 +737,19 @@ export function Roundtable({
       {/* The exportable table surface */}
       <div
         ref={tableRef}
-        className="tarot-frame relative aspect-square w-[min(92vw,560px,calc(100dvh-320px))] shrink-0 overflow-hidden"
+        className="tarot-frame relative aspect-square w-[min(92vw,540px,calc(100dvh-400px))] shrink-0 overflow-hidden"
         style={{
           background:
-            'radial-gradient(circle at 50% 78%, #1a140c 0%, #120e09 52%, #0b0908 100%)',
+            layout.id === 'fan'
+              ? 'radial-gradient(circle at 50% 78%, #1a140c 0%, #120e09 52%, #0b0908 100%)'
+              : `radial-gradient(circle at ${layout.center.x}% ${layout.center.y}%, #1a140c 0%, #120e09 54%, #0b0908 100%)`,
         }}
       >
-        <TableEngraving />
+        <TableEngraving layout={layout} />
 
         {/* Empty-table hint (mapping mode) */}
         {editable && cards.length === 0 && (
-          <p className="absolute inset-x-8 top-[36%] text-center font-body text-[15px] text-ivory/40 italic">
+          <p className="absolute inset-x-8 top-[30%] text-center font-body text-[15px] text-ivory/40 italic">
             Search the deck above to seat the first archetype from your reading.
           </p>
         )}
@@ -622,6 +757,7 @@ export function Roundtable({
         {/* Live snap cues (only while dragging) */}
         {intent && dragCtx.current && (
           <DragOverlay
+            layout={layout}
             intent={intent}
             targets={dragCtx.current.targets}
             dragW={dragCtx.current.dragW}
@@ -639,13 +775,13 @@ export function Roundtable({
           />
         ))}
 
-        {/* "You" seal — the origin of the four orbits */}
+        {/* "You" seal */}
         <div
           data-you
-          className="font-display absolute flex h-16 w-16 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-gold/80 bg-ink/80 text-[13px] font-semibold tracking-[0.18em] text-gold-bright uppercase"
+          className="font-display absolute flex h-14 w-14 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-gold/80 bg-ink/80 text-[12px] font-semibold tracking-[0.18em] text-gold-bright uppercase"
           style={{
-            left: `${YOU.x}%`,
-            top: `${YOU.y}%`,
+            left: `${layout.you.x}%`,
+            top: `${layout.you.y}%`,
             boxShadow:
               '0 0 0 3px rgba(11,9,8,0.9), 0 0 0 4px rgba(201,163,90,0.35), 0 0 30px -6px rgba(201,163,90,0.45)',
           }}
@@ -658,6 +794,7 @@ export function Roundtable({
           <SeatToken
             key={seat.id}
             seat={seat}
+            layout={layout}
             byId={byId}
             constraintsRef={tableRef}
             registerEl={(el) => {
@@ -683,7 +820,7 @@ export function Roundtable({
       )}
 
       {/* Controls (excluded from the export since they live outside tableRef) */}
-      <div className="mt-4 flex shrink-0 flex-wrap items-center justify-center gap-3">
+      <div className="mt-3 flex shrink-0 flex-wrap items-center justify-center gap-3">
         <button onClick={onRestart} className="btn-ghost">
           Start over
         </button>
@@ -702,6 +839,7 @@ export function Roundtable({
 
 function SeatToken({
   seat,
+  layout,
   byId,
   constraintsRef,
   registerEl,
@@ -713,6 +851,7 @@ function SeatToken({
   hideRemove,
 }: {
   seat: Seat
+  layout: Layout
   byId: Map<string, Archetype>
   constraintsRef: React.RefObject<HTMLDivElement | null>
   registerEl: (el: HTMLElement | null) => void
@@ -725,7 +864,7 @@ function SeatToken({
   /** Suppress the remove controls while the table is being exported. */
   hideRemove?: boolean
 }) {
-  const pos = ringPos(seat.ring, seat.phi)
+  const pos = posOf(layout, seat.ring, seat.phi)
   const [active, setActive] = useState(false)
   // On touch devices there is no hover; a tap toggles the remove controls.
   const [tapped, setTapped] = useState(false)
@@ -774,7 +913,7 @@ function SeatToken({
               key={cardId}
               data-card-id={cardId}
               className={`relative flex items-center gap-1.5 border select-none ${
-                isPrimary ? 'z-10 max-w-[130px] px-2.5 py-1.5' : 'max-w-[120px] px-2 py-1 -mt-px'
+                isPrimary ? 'z-10 max-w-[112px] px-2 py-1.5' : 'max-w-[104px] px-1.5 py-1 -mt-px'
               }`}
               style={{
                 borderColor: active ? cardAccent : `${cardAccent}99`,
@@ -792,7 +931,7 @@ function SeatToken({
                 style={{ background: cardAccent }}
               />
               {isPrimary ? (
-                <span className="font-body text-center text-[12px] leading-tight font-medium text-ivory">
+                <span className="font-body text-center text-[11px] leading-tight font-medium text-ivory">
                   {a.name}
                 </span>
               ) : (
@@ -803,7 +942,7 @@ function SeatToken({
                     if (!dragging.current) onPromote(cardId)
                   }}
                   title="Bring to the top of the stack"
-                  className="font-body text-center text-[11px] leading-tight text-ivory/70 transition hover:text-gold-bright"
+                  className="font-body text-center text-[10px] leading-tight text-ivory/70 transition hover:text-gold-bright"
                 >
                   {a.name}
                 </button>

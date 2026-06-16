@@ -59,20 +59,20 @@ test('full reading flow: intro -> swipe -> filter -> roundtable -> export', asyn
   await expect(page.getByRole('heading', { name: 'Seat your archetypes' })).toBeVisible()
   await expect(page.getByText('You', { exact: true })).toBeVisible()
 
-  // A seat must be draggable: grab one and confirm it moves (snapping to an
-  // orbit). Release into the empty inner-left orbit region (relative to the
-  // You seal) so it can't accidentally stack or ally with another seat.
+  // A seat must be draggable: grab one (starts on an outer ring) and drag it
+  // to the table centre — an empty inner orbit with the default 6 seats — so
+  // it can't accidentally stack or ally. Big, collision-free move in any layout.
   const seatCount = await page.locator('[data-token-id]').count()
   expect(seatCount).toBe(6)
-  const you = await page.getByText('You', { exact: true }).boundingBox()
-  if (!you) throw new Error('You seal not found')
+  const tableBox = await page.locator('.tarot-frame').boundingBox()
+  if (!tableBox) throw new Error('table not found')
   const token = page.locator('[data-token-id]').first()
   const before = await token.boundingBox()
   if (!before) throw new Error('no token found')
   await page.mouse.move(before.x + before.width / 2, before.y + before.height / 2)
   await page.mouse.down()
   // Move in steps so framer-motion registers a drag gesture.
-  await page.mouse.move(you.x - you.width * 1.6, you.y - you.height * 0.4, { steps: 8 })
+  await page.mouse.move(tableBox.x + tableBox.width * 0.5, tableBox.y + tableBox.height * 0.42, { steps: 8 })
   await page.mouse.up()
   await page.waitForTimeout(200)
   const after = await token.boundingBox()
@@ -133,6 +133,16 @@ test('manual mapping: search, seat, remove, AI prompt', async ({ page }) => {
   await expect(page.locator('[data-token-id]')).toHaveCount(3)
   // No cap: a seated count is shown.
   await expect(page.getByText('3 seated')).toBeVisible()
+
+  // Switching layout tabs keeps the seats (re-projected), and moves the You seal.
+  const youBefore = await page.getByText('You', { exact: true }).boundingBox()
+  await page.getByRole('tab', { name: 'Wheel' }).click()
+  await expect(page.getByRole('tab', { name: 'Wheel' })).toHaveAttribute('aria-selected', 'true')
+  await expect(page.locator('[data-token-id]')).toHaveCount(3)
+  const youAfter = await page.getByText('You', { exact: true }).boundingBox()
+  // Wheel seats You at the centre, Round Table at the rim — the seal moves up.
+  expect(youBefore!.y - youAfter!.y).toBeGreaterThan(40)
+  await page.getByRole('tab', { name: 'Round Table' }).click()
 
   // Remove one via its × control (revealed on hover).
   await page.locator('[data-token-id="queen"]').hover()
