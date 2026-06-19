@@ -23,17 +23,17 @@ test('full reading flow: intro -> swipe -> filter -> roundtable -> export', asyn
   await expect(page.getByRole('heading', { name: 'Archetypes' })).toBeVisible()
   await page.getByRole('button', { name: 'Begin the reading' }).click()
 
-  // Stage 1: keep 12 of 91, discard the rest -> advances to filter (12 > 8)
+  // Stage 1: keep 12 of 74, discard the rest -> advances to filter (12 > 8)
   await expect(page.getByRole('heading', { name: 'This is me?' })).toBeVisible()
 
   // Undo reverses an accidental swipe and restores the count.
   await expect(page.getByTestId('swipe-undo')).toBeDisabled()
   await page.getByTestId('swipe-yes').click()
-  await expect(page.getByText('90 left')).toBeVisible()
+  await expect(page.getByText('73 left')).toBeVisible()
   await page.getByTestId('swipe-undo').click()
-  await expect(page.getByText('91 left')).toBeVisible()
+  await expect(page.getByText('74 left')).toBeVisible()
 
-  await decideRound(page, 91, (i) => i < 12)
+  await decideRound(page, 74, (i) => i < 12)
 
   // Stage 2 (The Shadow): review the rejected pile, reclaim 2, then skip the rest.
   await expect(page.getByRole('heading', { name: 'Look again' })).toBeVisible()

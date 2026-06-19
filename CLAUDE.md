@@ -14,7 +14,7 @@ component is art-ready (`Archetype.image`).
 ```bash
 npm run dev      # Vite dev server on http://localhost:5173
 npm run build    # tsc -b && vite build (type-check + production bundle)
-npm run extract  # regenerate src/data/archetypes.ts from gallery.pdf (needs python3 + pypdf)
+npm run extract  # regenerate src/data/archetypes.ts from scripts/deck.json (node, no deps)
 npm test         # Playwright smoke test, both viewport projects
 
 # single project / single test
@@ -35,7 +35,7 @@ Chromium at a 390×844 touch viewport (not WebKit) to avoid an extra browser dow
 state and routes between stages; there is no router. The flow and the data that passes
 between stages:
 
-1. **Swipe** (`StageLayout` + `SwipeStack`) — the full shuffled deck of ~91 archetypes.
+1. **Swipe** (`StageLayout` + `SwipeStack`) — the full shuffled deck of ~74 archetypes.
    Right = "this is me". Produces a kept pile (right) and a rejected pile (left).
 2. **Shadow** (`SwipeStack` again, `stage: 'shadow'`) — a second pass over the *rejected*
    pile, framed as confronting reluctance/denial. Right = reclaim ("this is me too"). It
@@ -133,22 +133,18 @@ omits all journey/shadow language.
 
 ## Data pipeline
 
-`scripts/extract-archetypes.py` parses `gallery.pdf` (Myss's official Gallery of
-Archetypes, kept in the repo) into `src/data/archetypes.ts` — a typed `Archetype[]` the
-app imports at build time, so there is **no runtime PDF dependency**. The parser keys off
-the PDF's layout: each archetype is one page whose first line is a lowercase title;
-family-overview pages start with uppercase prose and are skipped, while their page ranges
-(`FAMILY_RANGES`) assign each card a `family`.
+The deck is **hand-curated in `scripts/deck.json`** — an array of ~74 cards, each
+`{ id, name, family, light, shadow }` where `light`/`shadow` are `Aspect`s
+(`{ tag, line }`: a 1–3 word tag + a one-to-two-sentence definition). `scripts/build-archetypes.mjs`
+(`npm run extract`) validates the deck (unique ids, known families, both poles present)
+and writes it to `src/data/archetypes.ts` — a typed `Archetype[]` the app imports at build
+time. It's a pure Node JSON→TS transform: **no PDF, no python, no dependencies.** To change
+the deck (wording, add/remove a card, re-family), edit `deck.json` and re-run `npm run extract`.
+**`archetypes.ts` is generated — don't hand-edit the output.**
 
-The PDF only supplies each card's **id, name, and family**. The displayed copy — a
-`light` and a `shadow` `Aspect` (`{ tag, line }`: a 1–3 word tag + one short sentence) —
-is **hand-authored in `scripts/aspects.json`**, keyed by archetype id, and merged in by
-the script (which warns on any id mismatch in either direction). So there are two source
-files: edit `aspects.json` for wording, edit the `.py` for structure, then re-run
-`npm run extract`. **`archetypes.ts` is generated — don't hand-edit the output.**
-
-The data extraction needs a python with `pypdf` — this machine's is at
-`/opt/anaconda3/bin/python3` (the default `python3` may be the Xcode one without pypdf).
+(History: the deck was originally scraped from Myss's *Gallery of Archetypes* PDF via a
+python/pypdf script; that was replaced once the content became a bespoke 74-card set with
+refined definitions, split cards — Lover/Don Juan, Knight/Warrior — and several drops.)
 
 ## Styling
 

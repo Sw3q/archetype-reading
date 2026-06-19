@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
-    "extract": "python3 scripts/extract-archetypes.py",
+    "extract": "node scripts/build-archetypes.mjs",
     "test": "playwright test"
   },
   "dependencies": {

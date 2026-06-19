@@ -1,0 +1,520 @@
+[
+  {
+    "id": "child-eternal",
+    "name": "Child: Eternal",
+    "family": "Survival",
+    "light": { "tag": "Forever young", "line": "Determination to remain young in body, mind, and spirit. Ability to see things with fresh eyes." },
+    "shadow": { "tag": "Peter Pan", "line": "Inability to grow up and be responsible. Extreme dependency on others for physical security." }
+  },
+  {
+    "id": "rebel",
+    "name": "Rebel",
+    "family": "Action",
+    "light": { "tag": "Reformer", "line": "Challenges authority to effect social change. Rejects spiritual systems that do not serve inner needs." },
+    "shadow": { "tag": "Mere defiance", "line": "Rejects legitimate authority out of anger. Rebels out of peer pressure or fashion." }
+  },
+  {
+    "id": "seeker",
+    "name": "Seeker",
+    "family": "Intellectual",
+    "light": { "tag": "Thirst for truth", "line": "Thirst for wisdom and truth wherever they are." },
+    "shadow": { "tag": "Can't commit", "line": "Inability to commit to a path once found." }
+  },
+  {
+    "id": "child-nature",
+    "name": "Child: Nature",
+    "family": "Survival",
+    "light": { "tag": "Kinship", "line": "Friendships with animals. Communication with nature spirits." },
+    "shadow": { "tag": "Cruelty", "line": "Tendency to abuse animals, people, and the environment." }
+  },
+  {
+    "id": "child-divine",
+    "name": "Child: Divine",
+    "family": "Survival",
+    "light": { "tag": "Innocence", "line": "Innocence, purity, and redemption. Suggests a special connection with the Divine." },
+    "shadow": { "tag": "Defenceless", "line": "An inability to defend oneself against negative forces." }
+  },
+  {
+    "id": "saboteur",
+    "name": "Saboteur",
+    "family": "Survival",
+    "light": { "tag": "Guardian of choice", "line": "Highlights your fear of self-empowerment and the changes it would bring to your life." },
+    "shadow": { "tag": "Self-destruction", "line": "Induces self-destructive behavior or the desire to undermine others." }
+  },
+  {
+    "id": "messiah",
+    "name": "Messiah",
+    "family": "Spiritual",
+    "light": { "tag": "Humble service", "line": "Serving humanity with humility." },
+    "shadow": { "tag": "Saviour complex", "line": "Exaggerated belief that you are the only means through which a cause can succeed." }
+  },
+  {
+    "id": "child-orphan",
+    "name": "Child: Orphan",
+    "family": "Survival",
+    "light": { "tag": "Independence", "line": "Independence based on learning to go it alone. Conquering fear of surviving." },
+    "shadow": { "tag": "Abandonment", "line": "Feelings of abandonment that stifle maturation. Seeking inappropriate surrogate families." }
+  },
+  {
+    "id": "child-wounded",
+    "name": "Child: Wounded",
+    "family": "Survival",
+    "light": { "tag": "Compassion", "line": "Awakens compassion and desire to serve other Wounded Children. Opens the learning path of forgiveness." },
+    "shadow": { "tag": "Blame", "line": "Blames all dysfunctional relationships on childhood wounds. Resists moving on through forgiveness." }
+  },
+  {
+    "id": "judge",
+    "name": "Judge",
+    "family": "Intellectual",
+    "light": { "tag": "Just discernment", "line": "Balancing justice and compassion. Managing the fair distribution of power." },
+    "shadow": { "tag": "Condemnation", "line": "Offering only destructive criticism. Misusing business, legal, or criminal authority." }
+  },
+  {
+    "id": "god",
+    "name": "God",
+    "family": "Spiritual",
+    "light": { "tag": "Benevolence", "line": "Benevolence and compassion. Recognizing the eternal force within yourself and others." },
+    "shadow": { "tag": "Despotism", "line": "Despotism and cruelty. Using power to control people." }
+  },
+  {
+    "id": "prostitute",
+    "name": "Prostitute",
+    "family": "Survival",
+    "light": { "tag": "Guardian of faith", "line": "Accentuates the challenge of surviving without negotiating the power of your spirit." },
+    "shadow": { "tag": "Selling out", "line": "Places material considerations and security above self-empowerment." }
+  },
+  {
+    "id": "shape-shifter",
+    "name": "Shape-Shifter",
+    "family": "Shadow",
+    "light": { "tag": "Adaptability", "line": "Skill at navigating through different levels of consciousness. Ability to see the potential in everything." },
+    "shadow": { "tag": "No core", "line": "Projecting any image that serves your personal agenda in the moment." }
+  },
+  {
+    "id": "samaritan",
+    "name": "Samaritan",
+    "family": "Spiritual",
+    "light": { "tag": "Selfless aid", "line": "Refines your capacity to help those you would prefer to ignore." },
+    "shadow": { "tag": "Needs credit", "line": "Exacting appreciation and recognition for the help you offer." }
+  },
+  {
+    "id": "victim",
+    "name": "Victim",
+    "family": "Survival",
+    "light": { "tag": "Boundaries", "line": "Prevents you from letting yourself be victimized, or victimizing others." },
+    "shadow": { "tag": "Pity-seeking", "line": "Playing the Victim for positive feedback in the form of pity. Inability to maintain personal boundaries." }
+  },
+  {
+    "id": "fool",
+    "name": "Fool",
+    "family": "Masculine",
+    "light": { "tag": "Sacred wit", "line": "Fearlessly revealing emotion. Helping people laugh at absurdity and hypocrisy." },
+    "shadow": { "tag": "Cruel humour", "line": "Using humor to wound rather than liberate. Denial of your emotional truth." }
+  },
+  {
+    "id": "advocate",
+    "name": "Advocate",
+    "family": "Action",
+    "light": { "tag": "Compassion in action", "line": "Inspires you to put compassion into action." },
+    "shadow": { "tag": "False cause", "line": "Embracing negative causes or committing to causes for personal gain." }
+  },
+  {
+    "id": "child-magical",
+    "name": "Child: Magical",
+    "family": "Survival",
+    "light": { "tag": "Wonder", "line": "Seeing the potential for sacred beauty in all things. The belief that everything is possible." },
+    "shadow": { "tag": "Disenchantment", "line": "Pessimism, depression, and disbelief in miracles. Believing that energy and action are not required for growth." }
+  },
+  {
+    "id": "liberator",
+    "name": "Liberator",
+    "family": "Action",
+    "light": { "tag": "Freedom", "line": "Freeing yourself and others from outmoded beliefs. Releasing negative thought patterns." },
+    "shadow": { "tag": "New tyranny", "line": "Imposing your own tyranny over those you claim to liberate. Ignoring legitimate constraints." }
+  },
+  {
+    "id": "storyteller",
+    "name": "Storyteller",
+    "family": "Intellectual",
+    "light": { "tag": "Living myth", "line": "Ability to experience and express life through stories and symbols." },
+    "shadow": { "tag": "Harmful tales", "line": "Making up tales that harm others." }
+  },
+  {
+    "id": "hedonist",
+    "name": "Hedonist",
+    "family": "Shadow",
+    "light": { "tag": "Joy of life", "line": "Inspires creative energy to embrace the good things in life. Celebrates the beauty in yourself." },
+    "shadow": { "tag": "Excess", "line": "Pursues pleasure to the detriment of health. Indulges at the expense of others." }
+  },
+  {
+    "id": "martyr",
+    "name": "Martyr",
+    "family": "Spiritual",
+    "light": { "tag": "Sacred service", "line": "Learning the transcendent nature of service to oneself or a cause." },
+    "shadow": { "tag": "Self-pity", "line": "Addiction to self-pity." }
+  },
+  {
+    "id": "goddess",
+    "name": "Goddess",
+    "family": "Feminine",
+    "light": { "tag": "Feminine force", "line": "The feminine expressed through wisdom, Nature, life force, and sensuality." },
+    "shadow": { "tag": "Exploitation", "line": "Exploitation of the female nature and form." }
+  },
+  {
+    "id": "trickster",
+    "name": "Trickster",
+    "family": "Shadow",
+    "light": { "tag": "Cunning play", "line": "Transcending convention, stuffiness, and predictable behavior." },
+    "shadow": { "tag": "Duplicity", "line": "Manipulating others through duplicity." }
+  },
+  {
+    "id": "father",
+    "name": "Father",
+    "family": "Masculine",
+    "light": { "tag": "Protector", "line": "Talent for creating and supporting life. Positive guiding light within a tribal unit." },
+    "shadow": { "tag": "Tyranny", "line": "Dictatorial control. Abuse of authority." }
+  },
+  {
+    "id": "guide",
+    "name": "Guide",
+    "family": "Intellectual",
+    "light": { "tag": "Divine in life", "line": "Represents the nature of the Divine in life and in yourself." },
+    "shadow": { "tag": "False guru", "line": "Places financial gain and control over imparting spiritual insight." }
+  },
+  {
+    "id": "visionary",
+    "name": "Visionary",
+    "family": "Creative",
+    "light": { "tag": "Foresight", "line": "Capacity to envision what is not yet conceivable to others. Willingness to proclaim a vision without regard for personal gain." },
+    "shadow": { "tag": "Sellout", "line": "Selling insights to the highest bidder. Compromising your vision to make it more acceptable." }
+  },
+  {
+    "id": "angel",
+    "name": "Angel",
+    "family": "Spiritual",
+    "light": { "tag": "Selfless help", "line": "Helping those in need with no expectation of return." },
+    "shadow": { "tag": "False light", "line": "Acting innocent or angelic to mislead others. Falsely claiming to be in touch with angelic guidance." }
+  },
+  {
+    "id": "lover",
+    "name": "Lover",
+    "family": "Masculine",
+    "light": { "tag": "Devotion", "line": "Great passion and devotion. Unbridled appreciation of someone or something." },
+    "shadow": { "tag": "Obsession", "line": "Obsessive passion that harms others. Self-destructive devotion." }
+  },
+  {
+    "id": "dilettante",
+    "name": "Dilettante",
+    "family": "Creative",
+    "light": { "tag": "Amateur delight", "line": "Delights in the arts without having to be a professional. Alerts you to the danger of becoming superficial in your pursuits." },
+    "shadow": { "tag": "Pretension", "line": "Pretension to much deeper knowledge than you actually possess." }
+  },
+  {
+    "id": "scribe",
+    "name": "Scribe",
+    "family": "Creative",
+    "light": { "tag": "Preservation", "line": "Preserving knowledge and information." },
+    "shadow": { "tag": "Falsification", "line": "Altering facts or plagiarizing others' work." }
+  },
+  {
+    "id": "mother",
+    "name": "Mother",
+    "family": "Feminine",
+    "light": { "tag": "Nurture", "line": "Nurturance, patience, unconditional love. Joy in giving birth to life." },
+    "shadow": { "tag": "Smothering", "line": "Smothering or abandoning children. Instilling guilt in children for becoming independent." }
+  },
+  {
+    "id": "alchemist",
+    "name": "Alchemist",
+    "family": "Intellectual",
+    "light": { "tag": "Transformation", "line": "Transformation of base motives and goals into golden wisdom." },
+    "shadow": { "tag": "Misused power", "line": "Misuse of the power and knowledge that come through spiritual practice." }
+  },
+  {
+    "id": "thief",
+    "name": "Thief",
+    "family": "Shadow",
+    "light": { "tag": "Inner wealth", "line": "Sheds light on the potential wealth within you that can never be stolen." },
+    "shadow": { "tag": "Taking", "line": "Stealing money, creative ideas, affection, or other powers you think you lack." }
+  },
+  {
+    "id": "hermit",
+    "name": "Hermit",
+    "family": "Intellectual",
+    "light": { "tag": "Solitude", "line": "Seeks solitude to focus intently on inner life. Serves personal creativity." },
+    "shadow": { "tag": "Withdrawal", "line": "Withdraws from society out of fear or negative judgments of others. Refusing to help those in need." }
+  },
+  {
+    "id": "avenger",
+    "name": "Avenger",
+    "family": "Action",
+    "light": { "tag": "Justice", "line": "Desire to balance the scales of justice. Righteousness on behalf of society or oneself." },
+    "shadow": { "tag": "Vengeance", "line": "Resorting to violence in the name of a cause." }
+  },
+  {
+    "id": "damsel",
+    "name": "Damsel",
+    "family": "Feminine",
+    "light": { "tag": "Self-reliance", "line": "Understanding the nature of healthy romance. Inspires you to rely on yourself." },
+    "shadow": { "tag": "Helplessness", "line": "Waiting for a Knight to provide for you. Seduction by romantic illusion." }
+  },
+  {
+    "id": "bully",
+    "name": "Bully",
+    "family": "Action",
+    "light": { "tag": "Facing fear", "line": "Highlights your tendency to intimidate others. Helps you confront the inner fears that bully you." },
+    "shadow": { "tag": "Intimidation", "line": "Conceals deep fears behind verbal or physical abuse." }
+  },
+  {
+    "id": "midas-miser",
+    "name": "Midas/Miser",
+    "family": "Action",
+    "light": { "tag": "Golden touch", "line": "Entrepreneurial or creative ability to turn anything to gold. Delight in sharing life's riches." },
+    "shadow": { "tag": "Hoarding", "line": "Hoarding money and emotions. Obsessive fear of losing your wealth." }
+  },
+  {
+    "id": "healer",
+    "name": "Healer",
+    "family": "Helper",
+    "light": { "tag": "Restoration", "line": "Passion to serve others by repairing the body, mind, and spirit. Ability to help transform pain into healing." },
+    "shadow": { "tag": "Self-neglect", "line": "Taking advantage of those who need help. Failing to care for oneself." }
+  },
+  {
+    "id": "engineer",
+    "name": "Engineer",
+    "family": "Creative",
+    "light": { "tag": "Ingenuity", "line": "Ability to give creative energy a practical expression. Talent for designing resolutions to common dilemmas." },
+    "shadow": { "tag": "Cold logic", "line": "Reliance on mechanistic solutions without regard for emotional consequences." }
+  },
+  {
+    "id": "mediator",
+    "name": "Mediator",
+    "family": "Intellectual",
+    "light": { "tag": "Reconciliation", "line": "Gift for negotiating fairness and strategy in personal and professional life. Respect for both sides of an argument." },
+    "shadow": { "tag": "Hidden agenda", "line": "Negotiating with an ulterior motive or hidden agenda, either personally or professionally." }
+  },
+  {
+    "id": "poet",
+    "name": "Poet",
+    "family": "Creative",
+    "light": { "tag": "Soul insight", "line": "Expresses soul insights in symbolic language." },
+    "shadow": { "tag": "Destructive gift", "line": "Turns a lyric gift to negative or destructive effect." }
+  },
+  {
+    "id": "teacher",
+    "name": "Teacher",
+    "family": "Intellectual",
+    "light": { "tag": "Imparting", "line": "Ability to communicate knowledge, experience, skill, or wisdom." },
+    "shadow": { "tag": "Manipulation", "line": "Manipulating or abusing students. Teaching negative traits and destructive skills." }
+  },
+  {
+    "id": "beggar",
+    "name": "Beggar",
+    "family": "Shadow",
+    "light": { "tag": "Humility", "line": "Confronts empowerment at the level of physical survival. Awakens the spiritual authority of humility, compassion, and self-esteem." },
+    "shadow": { "tag": "Dependence", "line": "Dependence on others to the exclusion of effort." }
+  },
+  {
+    "id": "destroyer",
+    "name": "Destroyer",
+    "family": "Action",
+    "light": { "tag": "Renewal", "line": "Releasing what is potentially destructive. Preparing for new life." },
+    "shadow": { "tag": "Annihilation", "line": "Intoxication with destructive power. Destroying others' dreams or potential." }
+  },
+  {
+    "id": "femme-fatale",
+    "name": "Femme Fatale",
+    "family": "Shadow",
+    "light": { "tag": "Erotic power", "line": "Highlights the erotic energy of the feminine. Opens your heart when your dependency is rejected." },
+    "shadow": { "tag": "Manipulation", "line": "Inappropriate use of sensuality. Attachment to money and power." }
+  },
+  {
+    "id": "monk-nun",
+    "name": "Monk/Nun",
+    "family": "Spiritual",
+    "light": { "tag": "Devotion", "line": "Selfless devotion and single-minded dedication to Spirit." },
+    "shadow": { "tag": "Excess piety", "line": "Negative judgment of the physical world. Excess piety." }
+  },
+  {
+    "id": "mystic",
+    "name": "Mystic",
+    "family": "Intellectual",
+    "light": { "tag": "Union", "line": "Revels in intimate union with the Divine." },
+    "shadow": { "tag": "Delusion", "line": "Delusional rapport with the Divine." }
+  },
+  {
+    "id": "priest",
+    "name": "Priest",
+    "family": "Spiritual",
+    "light": { "tag": "Sacrament", "line": "Facilitates spiritual commitments. Serves as a channel of spiritual energy." },
+    "shadow": { "tag": "Betrayed trust", "line": "Violates the trust of your spiritual community. Seduced by your own spiritual role." }
+  },
+  {
+    "id": "vampire",
+    "name": "Vampire",
+    "family": "Shadow",
+    "light": { "tag": "Awareness", "line": "Makes you aware that someone or something is draining your life force." },
+    "shadow": { "tag": "Draining", "line": "Depleting others for your psychic survival. Chronic complaining and co-dependency." }
+  },
+  {
+    "id": "virgin",
+    "name": "Virgin",
+    "family": "Feminine",
+    "light": { "tag": "Purity", "line": "Maintaining symbolic purity of heart and spirit." },
+    "shadow": { "tag": "Fear of union", "line": "Fear of intimate union." }
+  },
+  {
+    "id": "artist",
+    "name": "Artist",
+    "family": "Creative",
+    "light": { "tag": "Expression", "line": "Expressing a dimension of life that is just beyond the five senses. Inspiring others to see life symbolically." },
+    "shadow": { "tag": "Tortured genius", "line": "Using talent as an excuse to mistreat others. Posing as the Starving Artist to elicit pity." }
+  },
+  {
+    "id": "knight",
+    "name": "Knight",
+    "family": "Masculine",
+    "light": { "tag": "Chivalry", "line": "Loyalty, romance, and chivalry. A love of honor." },
+    "shadow": { "tag": "Blind allegiance", "line": "Allegiance to a destructive ruler or principle. Romantic delusions." }
+  },
+  {
+    "id": "rescuer",
+    "name": "Rescuer",
+    "family": "Helper",
+    "light": { "tag": "Aid", "line": "Provides strength and support to others in crisis. Acts out of love with no expectation of reward." },
+    "shadow": { "tag": "Codependence", "line": "Assumes that the rescued will reciprocate. Keeps the rescued one needy." }
+  },
+  {
+    "id": "servant",
+    "name": "Servant",
+    "family": "Helper",
+    "light": { "tag": "Loving service", "line": "Delight in serving others with a free and loving heart." },
+    "shadow": { "tag": "Indenture", "line": "Using the lack of money as an excuse not to move forward with life." }
+  },
+  {
+    "id": "companion",
+    "name": "Companion",
+    "family": "Helper",
+    "light": { "tag": "Loyalty", "line": "Loyalty, tenacity, and unselfishness." },
+    "shadow": { "tag": "Betrayal", "line": "Betrayal by misusing confidences. Loss of personal identity." }
+  },
+  {
+    "id": "gossip",
+    "name": "Gossip",
+    "family": "Creative",
+    "light": { "tag": "Honoring trust", "line": "Awakens consideration for the feelings of others. Honoring trust." },
+    "shadow": { "tag": "Betraying confidence", "line": "Thrives on the power of passing on private or secret information. Betraying confidences." }
+  },
+  {
+    "id": "mentor",
+    "name": "Mentor",
+    "family": "Intellectual",
+    "light": { "tag": "Wisdom passed", "line": "Passing on wisdom and refining a student's character." },
+    "shadow": { "tag": "Control", "line": "Inability to allow the student to move on to the role of Master. Imparting false instruction." }
+  },
+  {
+    "id": "addict",
+    "name": "Addict",
+    "family": "Shadow",
+    "light": { "tag": "Confronting craving", "line": "Helps you recognize and confront addictive behavior." },
+    "shadow": { "tag": "Compulsion", "line": "Compromises integrity and honesty. Allows an addictive pattern to have authority over your inner spirit." }
+  },
+  {
+    "id": "queen",
+    "name": "Queen",
+    "family": "Feminine",
+    "light": { "tag": "Regal feminine", "line": "Radiates the regal feminine. Uses her benevolent authority to protect others." },
+    "shadow": { "tag": "Tyranny", "line": "Becomes arrogant when authority is challenged. Controlling and demanding." }
+  },
+  {
+    "id": "slave",
+    "name": "Slave",
+    "family": "Action",
+    "light": { "tag": "Surrender", "line": "Surrendering your power of choice to the Divine with complete trust." },
+    "shadow": { "tag": "Bondage", "line": "Giving your willpower to an external authority out of fear of making your own choices." }
+  },
+  {
+    "id": "detective",
+    "name": "Detective",
+    "family": "Action",
+    "light": { "tag": "Insight", "line": "Great powers of observation and intuition. Desire to seek out the truth." },
+    "shadow": { "tag": "Voyeurism", "line": "Voyeurism. Falsifying information." }
+  },
+  {
+    "id": "athlete",
+    "name": "Athlete",
+    "family": "Creative",
+    "light": { "tag": "Prowess", "line": "Dedication to transcending physical limits, including handicaps. Development of personal willpower and strength of spirit." },
+    "shadow": { "tag": "Invulnerability", "line": "Misuse of athletic ability for selfish ends. False sense of invulnerability and entitlement." }
+  },
+  {
+    "id": "don-juan",
+    "name": "Don Juan",
+    "family": "Masculine",
+    "light": { "tag": "Seductive charm", "line": "Spotlights your positive seductive qualities." },
+    "shadow": { "tag": "Seduction", "line": "Using the power of romantic attraction for private agendas." }
+  },
+  {
+    "id": "king",
+    "name": "King",
+    "family": "Masculine",
+    "light": { "tag": "Benevolent rule", "line": "Enlightened, benevolent leadership. Benefiting those in your charge." },
+    "shadow": { "tag": "Entitlement", "line": "Excessive feelings of entitlement. Rulership without restraint." }
+  },
+  {
+    "id": "hero-heroine",
+    "name": "Hero/Heroine",
+    "family": "Action",
+    "light": { "tag": "Courage", "line": "Passion for a journey of personal empowerment." },
+    "shadow": { "tag": "False heroism", "line": "Escapism and a false sense of heroism." }
+  },
+  {
+    "id": "exorcist",
+    "name": "Exorcist",
+    "family": "Spiritual",
+    "light": { "tag": "Deliverance", "line": "Freeing yourself and others of destructive impulses." },
+    "shadow": { "tag": "Avoidance", "line": "Fear of facing your own demons." }
+  },
+  {
+    "id": "pioneer",
+    "name": "Pioneer",
+    "family": "Creative",
+    "light": { "tag": "Discovery", "line": "Passion for doing and creating what has not been done before." },
+    "shadow": { "tag": "Restlessness", "line": "Compulsive need to keep moving on." }
+  },
+  {
+    "id": "warrior",
+    "name": "Warrior",
+    "family": "Masculine",
+    "light": { "tag": "Valor", "line": "Strength, skill, discipline, and toughness of will. Heroism, stoicism, and self-sacrifice in conquering the ego." },
+    "shadow": { "tag": "Ruthlessness", "line": "Trading ethical principles for victory at any cost. Indifference to the suffering inflicted on others." }
+  },
+  {
+    "id": "gambler",
+    "name": "Gambler",
+    "family": "Action",
+    "light": { "tag": "Intuition", "line": "Willingness to follow intuition, even when others doubt you." },
+    "shadow": { "tag": "Reckless luck", "line": "Relying on luck rather than hard work." }
+  },
+  {
+    "id": "networker",
+    "name": "Networker",
+    "family": "Creative",
+    "light": { "tag": "Connection", "line": "Enhances unity through the sharing of information. Engenders social awareness and empathy." },
+    "shadow": { "tag": "Self-interest", "line": "Conveys information only for personal gain. Spreads fear and falsehood." }
+  },
+  {
+    "id": "student",
+    "name": "Student",
+    "family": "Intellectual",
+    "light": { "tag": "Openness", "line": "Humility and devotion to knowledge. Openness to lifelong learning." },
+    "shadow": { "tag": "Arrogance", "line": "Arrogance in the pursuit of destructive knowledge. Unwillingness to translate knowledge into action." }
+  },
+  {
+    "id": "prince",
+    "name": "Prince",
+    "family": "Masculine",
+    "light": { "tag": "Promise", "line": "Romantic charm and potential for power." },
+    "shadow": { "tag": "Self-aggrandizement", "line": "Using power for self-aggrandizement." }
+  }
+]

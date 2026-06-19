@@ -82,10 +82,10 @@ ${beneath
 About this reading:
 - It was laid out by hand, card by card, and every placement below is deliberate.
 - If I began this work in session with a human analyst, treat our conversation as a continuation of that work, not a restart.`
-    : `I have just completed an archetype roundtable reading drawn from Myss's gallery of 91 archetypes, and I want to explore it with you in a depth-psychology session.
+    : `I have just completed an archetype roundtable reading drawn from Myss's gallery of archetypes, and I want to explore it with you in a depth-psychology session.
 
 How the reading worked:
-1. I swiped through all 91 archetypes on fast instinct, keeping those I recognize in myself.
+1. I swiped through the whole deck of archetypes on fast instinct, keeping those I recognize in myself.
 2. I then re-examined every card I had rejected, and reclaimed the ones I had been reluctant to admit (marked below).
 3. I narrowed the keepers by holding only what is innate — what I can't help being — over what is adaptive, a skill I've merely learned.
 4. Finally I arranged the remaining archetypes consciously on a roundtable of four concentric orbits around my own seat.`
