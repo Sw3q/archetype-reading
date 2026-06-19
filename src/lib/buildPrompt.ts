@@ -52,13 +52,13 @@ export function buildPrompt(
     const entries = here
       .map((s) => {
         const [primary, ...beneath] = s.cards
-        let entry = `• ${primary.name} (${primary.family} family)${reclaimedNote(primary)}
+        let entry = `• ${primary.name}${reclaimedNote(primary)}
   ${aspectLine(primary)}`
         if (beneath.length > 0) {
           entry += `
   Stacked beneath it — close derivatives that fuel the card on top:
 ${beneath
-  .map((a) => `  · ${a.name} (${a.family})${reclaimedNote(a)} — ${aspectLine(a)}`)
+  .map((a) => `  · ${a.name}${reclaimedNote(a)} — ${aspectLine(a)}`)
   .join('\n')}`
         }
         return entry

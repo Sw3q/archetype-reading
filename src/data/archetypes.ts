@@ -6,7 +6,6 @@ export const ARCHETYPES: Archetype[] = [
   {
     "id": "child-eternal",
     "name": "Child: Eternal",
-    "family": "Survival",
     "light": {
       "tag": "Forever young",
       "line": "Determination to remain young in body, mind, and spirit. Ability to see things with fresh eyes."
@@ -19,7 +18,6 @@ export const ARCHETYPES: Archetype[] = [
   {
     "id": "rebel",
     "name": "Rebel",
-    "family": "Action",
     "light": {
       "tag": "Reformer",
       "line": "Challenges authority to effect social change. Rejects spiritual systems that do not serve inner needs."
@@ -32,7 +30,6 @@ export const ARCHETYPES: Archetype[] = [
   {
     "id": "seeker",
     "name": "Seeker",
-    "family": "Intellectual",
     "light": {
       "tag": "Thirst for truth",
       "line": "Thirst for wisdom and truth wherever they are."
@@ -45,7 +42,6 @@ export const ARCHETYPES: Archetype[] = [
   {
     "id": "child-nature",
     "name": "Child: Nature",
-    "family": "Survival",
     "light": {
       "tag": "Kinship",
       "line": "Friendships with animals. Communication with nature spirits."
@@ -58,7 +54,6 @@ export const ARCHETYPES: Archetype[] = [
   {
     "id": "child-divine",
     "name": "Child: Divine",
-    "family": "Survival",
     "light": {
       "tag": "Innocence",
       "line": "Innocence, purity, and redemption. Suggests a special connection with the Divine."
@@ -71,7 +66,6 @@ export const ARCHETYPES: Archetype[] = [
   {
     "id": "saboteur",
     "name": "Saboteur",
-    "family": "Survival",
     "light": {
       "tag": "Guardian of choice",
       "line": "Highlights your fear of self-empowerment and the changes it would bring to your life."
@@ -84,7 +78,6 @@ export const ARCHETYPES: Archetype[] = [
   {
     "id": "messiah",
     "name": "Messiah",
-    "family": "Spiritual",
     "light": {
       "tag": "Humble service",
       "line": "Serving humanity with humility."
@@ -97,7 +90,6 @@ export const ARCHETYPES: Archetype[] = [
   {
     "id": "child-orphan",
     "name": "Child: Orphan",
-    "family": "Survival",
     "light": {
       "tag": "Independence",
       "line": "Independence based on learning to go it alone. Conquering fear of surviving."
@@ -110,7 +102,6 @@ export const ARCHETYPES: Archetype[] = [
   {
     "id": "child-wounded",
     "name": "Child: Wounded",
-    "family": "Survival",
     "light": {
       "tag": "Compassion",
       "line": "Awakens compassion and desire to serve other Wounded Children. Opens the learning path of forgiveness."
@@ -123,7 +114,6 @@ export const ARCHETYPES: Archetype[] = [
   {
     "id": "judge",
     "name": "Judge",
-    "family": "Intellectual",
     "light": {
       "tag": "Just discernment",
       "line": "Balancing justice and compassion. Managing the fair distribution of power."
@@ -136,7 +126,6 @@ export const ARCHETYPES: Archetype[] = [
   {
     "id": "god",
     "name": "God",
-    "family": "Spiritual",
     "light": {
       "tag": "Benevolence",
       "line": "Benevolence and compassion. Recognizing the eternal force within yourself and others."
@@ -149,7 +138,6 @@ export const ARCHETYPES: Archetype[] = [
   {
     "id": "prostitute",
     "name": "Prostitute",
-    "family": "Survival",
     "light": {
       "tag": "Guardian of faith",
       "line": "Accentuates the challenge of surviving without negotiating the power of your spirit."
@@ -162,7 +150,6 @@ export const ARCHETYPES: Archetype[] = [
   {
     "id": "shape-shifter",
     "name": "Shape-Shifter",
-    "family": "Shadow",
     "light": {
       "tag": "Adaptability",
       "line": "Skill at navigating through different levels of consciousness. Ability to see the potential in everything."
@@ -175,7 +162,6 @@ export const ARCHETYPES: Archetype[] = [
   {
     "id": "samaritan",
     "name": "Samaritan",
-    "family": "Spiritual",
     "light": {
       "tag": "Selfless aid",
       "line": "Refines your capacity to help those you would prefer to ignore."
@@ -188,7 +174,6 @@ export const ARCHETYPES: Archetype[] = [
   {
     "id": "victim",
     "name": "Victim",
-    "family": "Survival",
     "light": {
       "tag": "Boundaries",
       "line": "Prevents you from letting yourself be victimized, or victimizing others."
@@ -201,7 +186,6 @@ export const ARCHETYPES: Archetype[] = [
   {
     "id": "fool",
     "name": "Fool",
-    "family": "Masculine",
     "light": {
       "tag": "Sacred wit",
       "line": "Fearlessly revealing emotion. Helping people laugh at absurdity and hypocrisy."
@@ -214,7 +198,6 @@ export const ARCHETYPES: Archetype[] = [
   {
     "id": "advocate",
     "name": "Advocate",
-    "family": "Action",
     "light": {
       "tag": "Compassion in action",
       "line": "Inspires you to put compassion into action."
@@ -227,7 +210,6 @@ export const ARCHETYPES: Archetype[] = [
   {
     "id": "child-magical",
     "name": "Child: Magical",
-    "family": "Survival",
     "light": {
       "tag": "Wonder",
       "line": "Seeing the potential for sacred beauty in all things. The belief that everything is possible."
@@ -240,7 +222,6 @@ export const ARCHETYPES: Archetype[] = [
   {
     "id": "liberator",
     "name": "Liberator",
-    "family": "Action",
     "light": {
       "tag": "Freedom",
       "line": "Freeing yourself and others from outmoded beliefs. Releasing negative thought patterns."
@@ -253,7 +234,6 @@ export const ARCHETYPES: Archetype[] = [
   {
     "id": "storyteller",
     "name": "Storyteller",
-    "family": "Intellectual",
     "light": {
       "tag": "Living myth",
       "line": "Ability to experience and express life through stories and symbols."
@@ -266,7 +246,6 @@ export const ARCHETYPES: Archetype[] = [
   {
     "id": "hedonist",
     "name": "Hedonist",
-    "family": "Shadow",
     "light": {
       "tag": "Joy of life",
       "line": "Inspires creative energy to embrace the good things in life. Celebrates the beauty in yourself."
@@ -279,7 +258,6 @@ export const ARCHETYPES: Archetype[] = [
   {
     "id": "martyr",
     "name": "Martyr",
-    "family": "Spiritual",
     "light": {
       "tag": "Sacred service",
       "line": "Learning the transcendent nature of service to oneself or a cause."
@@ -292,7 +270,6 @@ export const ARCHETYPES: Archetype[] = [
   {
     "id": "goddess",
     "name": "Goddess",
-    "family": "Feminine",
     "light": {
       "tag": "Feminine force",
       "line": "The feminine expressed through wisdom, Nature, life force, and sensuality."
@@ -305,7 +282,6 @@ export const ARCHETYPES: Archetype[] = [
   {
     "id": "trickster",
     "name": "Trickster",
-    "family": "Shadow",
     "light": {
       "tag": "Cunning play",
       "line": "Transcending convention, stuffiness, and predictable behavior."
@@ -318,7 +294,6 @@ export const ARCHETYPES: Archetype[] = [
   {
     "id": "father",
     "name": "Father",
-    "family": "Masculine",
     "light": {
       "tag": "Protector",
       "line": "Talent for creating and supporting life. Positive guiding light within a tribal unit."
@@ -331,7 +306,6 @@ export const ARCHETYPES: Archetype[] = [
   {
     "id": "guide",
     "name": "Guide",
-    "family": "Intellectual",
     "light": {
       "tag": "Divine in life",
       "line": "Represents the nature of the Divine in life and in yourself."
@@ -344,7 +318,6 @@ export const ARCHETYPES: Archetype[] = [
   {
     "id": "visionary",
     "name": "Visionary",
-    "family": "Creative",
     "light": {
       "tag": "Foresight",
       "line": "Capacity to envision what is not yet conceivable to others. Willingness to proclaim a vision without regard for personal gain."
@@ -357,7 +330,6 @@ export const ARCHETYPES: Archetype[] = [
   {
     "id": "angel",
     "name": "Angel",
-    "family": "Spiritual",
     "light": {
       "tag": "Selfless help",
       "line": "Helping those in need with no expectation of return."
@@ -370,7 +342,6 @@ export const ARCHETYPES: Archetype[] = [
   {
     "id": "lover",
     "name": "Lover",
-    "family": "Masculine",
     "light": {
       "tag": "Devotion",
       "line": "Great passion and devotion. Unbridled appreciation of someone or something."
@@ -383,7 +354,6 @@ export const ARCHETYPES: Archetype[] = [
   {
     "id": "dilettante",
     "name": "Dilettante",
-    "family": "Creative",
     "light": {
       "tag": "Amateur delight",
       "line": "Delights in the arts without having to be a professional. Alerts you to the danger of becoming superficial in your pursuits."
@@ -396,7 +366,6 @@ export const ARCHETYPES: Archetype[] = [
   {
     "id": "scribe",
     "name": "Scribe",
-    "family": "Creative",
     "light": {
       "tag": "Preservation",
       "line": "Preserving knowledge and information."
@@ -409,7 +378,6 @@ export const ARCHETYPES: Archetype[] = [
   {
     "id": "mother",
     "name": "Mother",
-    "family": "Feminine",
     "light": {
       "tag": "Nurture",
       "line": "Nurturance, patience, unconditional love. Joy in giving birth to life."
@@ -422,7 +390,6 @@ export const ARCHETYPES: Archetype[] = [
   {
     "id": "alchemist",
     "name": "Alchemist",
-    "family": "Intellectual",
     "light": {
       "tag": "Transformation",
       "line": "Transformation of base motives and goals into golden wisdom."
@@ -435,7 +402,6 @@ export const ARCHETYPES: Archetype[] = [
   {
     "id": "thief",
     "name": "Thief",
-    "family": "Shadow",
     "light": {
       "tag": "Inner wealth",
       "line": "Sheds light on the potential wealth within you that can never be stolen."
@@ -448,7 +414,6 @@ export const ARCHETYPES: Archetype[] = [
   {
     "id": "hermit",
     "name": "Hermit",
-    "family": "Intellectual",
     "light": {
       "tag": "Solitude",
       "line": "Seeks solitude to focus intently on inner life. Serves personal creativity."
@@ -461,7 +426,6 @@ export const ARCHETYPES: Archetype[] = [
   {
     "id": "avenger",
     "name": "Avenger",
-    "family": "Action",
     "light": {
       "tag": "Justice",
       "line": "Desire to balance the scales of justice. Righteousness on behalf of society or oneself."
@@ -474,7 +438,6 @@ export const ARCHETYPES: Archetype[] = [
   {
     "id": "damsel",
     "name": "Damsel",
-    "family": "Feminine",
     "light": {
       "tag": "Self-reliance",
       "line": "Understanding the nature of healthy romance. Inspires you to rely on yourself."
@@ -487,7 +450,6 @@ export const ARCHETYPES: Archetype[] = [
   {
     "id": "bully",
     "name": "Bully",
-    "family": "Action",
     "light": {
       "tag": "Facing fear",
       "line": "Highlights your tendency to intimidate others. Helps you confront the inner fears that bully you."
@@ -500,7 +462,6 @@ export const ARCHETYPES: Archetype[] = [
   {
     "id": "midas-miser",
     "name": "Midas/Miser",
-    "family": "Action",
     "light": {
       "tag": "Golden touch",
       "line": "Entrepreneurial or creative ability to turn anything to gold. Delight in sharing life's riches."
@@ -513,7 +474,6 @@ export const ARCHETYPES: Archetype[] = [
   {
     "id": "healer",
     "name": "Healer",
-    "family": "Helper",
     "light": {
       "tag": "Restoration",
       "line": "Passion to serve others by repairing the body, mind, and spirit. Ability to help transform pain into healing."
@@ -526,7 +486,6 @@ export const ARCHETYPES: Archetype[] = [
   {
     "id": "engineer",
     "name": "Engineer",
-    "family": "Creative",
     "light": {
       "tag": "Ingenuity",
       "line": "Ability to give creative energy a practical expression. Talent for designing resolutions to common dilemmas."
@@ -539,7 +498,6 @@ export const ARCHETYPES: Archetype[] = [
   {
     "id": "mediator",
     "name": "Mediator",
-    "family": "Intellectual",
     "light": {
       "tag": "Reconciliation",
       "line": "Gift for negotiating fairness and strategy in personal and professional life. Respect for both sides of an argument."
@@ -552,7 +510,6 @@ export const ARCHETYPES: Archetype[] = [
   {
     "id": "poet",
     "name": "Poet",
-    "family": "Creative",
     "light": {
       "tag": "Soul insight",
       "line": "Expresses soul insights in symbolic language."
@@ -565,7 +522,6 @@ export const ARCHETYPES: Archetype[] = [
   {
     "id": "teacher",
     "name": "Teacher",
-    "family": "Intellectual",
     "light": {
       "tag": "Imparting",
       "line": "Ability to communicate knowledge, experience, skill, or wisdom."
@@ -578,7 +534,6 @@ export const ARCHETYPES: Archetype[] = [
   {
     "id": "beggar",
     "name": "Beggar",
-    "family": "Shadow",
     "light": {
       "tag": "Humility",
       "line": "Confronts empowerment at the level of physical survival. Awakens the spiritual authority of humility, compassion, and self-esteem."
@@ -591,7 +546,6 @@ export const ARCHETYPES: Archetype[] = [
   {
     "id": "destroyer",
     "name": "Destroyer",
-    "family": "Action",
     "light": {
       "tag": "Renewal",
       "line": "Releasing what is potentially destructive. Preparing for new life."
@@ -604,7 +558,6 @@ export const ARCHETYPES: Archetype[] = [
   {
     "id": "femme-fatale",
     "name": "Femme Fatale",
-    "family": "Shadow",
     "light": {
       "tag": "Erotic power",
       "line": "Highlights the erotic energy of the feminine. Opens your heart when your dependency is rejected."
@@ -617,7 +570,6 @@ export const ARCHETYPES: Archetype[] = [
   {
     "id": "monk-nun",
     "name": "Monk/Nun",
-    "family": "Spiritual",
     "light": {
       "tag": "Devotion",
       "line": "Selfless devotion and single-minded dedication to Spirit."
@@ -630,7 +582,6 @@ export const ARCHETYPES: Archetype[] = [
   {
     "id": "mystic",
     "name": "Mystic",
-    "family": "Intellectual",
     "light": {
       "tag": "Union",
       "line": "Revels in intimate union with the Divine."
@@ -643,7 +594,6 @@ export const ARCHETYPES: Archetype[] = [
   {
     "id": "priest",
     "name": "Priest",
-    "family": "Spiritual",
     "light": {
       "tag": "Sacrament",
       "line": "Facilitates spiritual commitments. Serves as a channel of spiritual energy."
@@ -656,7 +606,6 @@ export const ARCHETYPES: Archetype[] = [
   {
     "id": "vampire",
     "name": "Vampire",
-    "family": "Shadow",
     "light": {
       "tag": "Awareness",
       "line": "Makes you aware that someone or something is draining your life force."
@@ -669,7 +618,6 @@ export const ARCHETYPES: Archetype[] = [
   {
     "id": "virgin",
     "name": "Virgin",
-    "family": "Feminine",
     "light": {
       "tag": "Purity",
       "line": "Maintaining symbolic purity of heart and spirit."
@@ -682,7 +630,6 @@ export const ARCHETYPES: Archetype[] = [
   {
     "id": "artist",
     "name": "Artist",
-    "family": "Creative",
     "light": {
       "tag": "Expression",
       "line": "Expressing a dimension of life that is just beyond the five senses. Inspiring others to see life symbolically."
@@ -695,7 +642,6 @@ export const ARCHETYPES: Archetype[] = [
   {
     "id": "knight",
     "name": "Knight",
-    "family": "Masculine",
     "light": {
       "tag": "Chivalry",
       "line": "Loyalty, romance, and chivalry. A love of honor."
@@ -708,7 +654,6 @@ export const ARCHETYPES: Archetype[] = [
   {
     "id": "rescuer",
     "name": "Rescuer",
-    "family": "Helper",
     "light": {
       "tag": "Aid",
       "line": "Provides strength and support to others in crisis. Acts out of love with no expectation of reward."
@@ -721,7 +666,6 @@ export const ARCHETYPES: Archetype[] = [
   {
     "id": "servant",
     "name": "Servant",
-    "family": "Helper",
     "light": {
       "tag": "Loving service",
       "line": "Delight in serving others with a free and loving heart."
@@ -734,7 +678,6 @@ export const ARCHETYPES: Archetype[] = [
   {
     "id": "companion",
     "name": "Companion",
-    "family": "Helper",
     "light": {
       "tag": "Loyalty",
       "line": "Loyalty, tenacity, and unselfishness."
@@ -747,7 +690,6 @@ export const ARCHETYPES: Archetype[] = [
   {
     "id": "gossip",
     "name": "Gossip",
-    "family": "Creative",
     "light": {
       "tag": "Honoring trust",
       "line": "Awakens consideration for the feelings of others. Honoring trust."
@@ -760,7 +702,6 @@ export const ARCHETYPES: Archetype[] = [
   {
     "id": "mentor",
     "name": "Mentor",
-    "family": "Intellectual",
     "light": {
       "tag": "Wisdom passed",
       "line": "Passing on wisdom and refining a student's character."
@@ -773,7 +714,6 @@ export const ARCHETYPES: Archetype[] = [
   {
     "id": "addict",
     "name": "Addict",
-    "family": "Shadow",
     "light": {
       "tag": "Confronting craving",
       "line": "Helps you recognize and confront addictive behavior."
@@ -786,7 +726,6 @@ export const ARCHETYPES: Archetype[] = [
   {
     "id": "queen",
     "name": "Queen",
-    "family": "Feminine",
     "light": {
       "tag": "Regal feminine",
       "line": "Radiates the regal feminine. Uses her benevolent authority to protect others."
@@ -799,7 +738,6 @@ export const ARCHETYPES: Archetype[] = [
   {
     "id": "slave",
     "name": "Slave",
-    "family": "Action",
     "light": {
       "tag": "Surrender",
       "line": "Surrendering your power of choice to the Divine with complete trust."
@@ -812,7 +750,6 @@ export const ARCHETYPES: Archetype[] = [
   {
     "id": "detective",
     "name": "Detective",
-    "family": "Action",
     "light": {
       "tag": "Insight",
       "line": "Great powers of observation and intuition. Desire to seek out the truth."
@@ -825,7 +762,6 @@ export const ARCHETYPES: Archetype[] = [
   {
     "id": "athlete",
     "name": "Athlete",
-    "family": "Creative",
     "light": {
       "tag": "Prowess",
       "line": "Dedication to transcending physical limits, including handicaps. Development of personal willpower and strength of spirit."
@@ -838,7 +774,6 @@ export const ARCHETYPES: Archetype[] = [
   {
     "id": "don-juan",
     "name": "Don Juan",
-    "family": "Masculine",
     "light": {
       "tag": "Seductive charm",
       "line": "Spotlights your positive seductive qualities."
@@ -851,7 +786,6 @@ export const ARCHETYPES: Archetype[] = [
   {
     "id": "king",
     "name": "King",
-    "family": "Masculine",
     "light": {
       "tag": "Benevolent rule",
       "line": "Enlightened, benevolent leadership. Benefiting those in your charge."
@@ -864,7 +798,6 @@ export const ARCHETYPES: Archetype[] = [
   {
     "id": "hero-heroine",
     "name": "Hero/Heroine",
-    "family": "Action",
     "light": {
       "tag": "Courage",
       "line": "Passion for a journey of personal empowerment."
@@ -877,7 +810,6 @@ export const ARCHETYPES: Archetype[] = [
   {
     "id": "exorcist",
     "name": "Exorcist",
-    "family": "Spiritual",
     "light": {
       "tag": "Deliverance",
       "line": "Freeing yourself and others of destructive impulses."
@@ -890,7 +822,6 @@ export const ARCHETYPES: Archetype[] = [
   {
     "id": "pioneer",
     "name": "Pioneer",
-    "family": "Creative",
     "light": {
       "tag": "Discovery",
       "line": "Passion for doing and creating what has not been done before."
@@ -903,7 +834,6 @@ export const ARCHETYPES: Archetype[] = [
   {
     "id": "warrior",
     "name": "Warrior",
-    "family": "Masculine",
     "light": {
       "tag": "Valor",
       "line": "Strength, skill, discipline, and toughness of will. Heroism, stoicism, and self-sacrifice in conquering the ego."
@@ -916,7 +846,6 @@ export const ARCHETYPES: Archetype[] = [
   {
     "id": "gambler",
     "name": "Gambler",
-    "family": "Action",
     "light": {
       "tag": "Intuition",
       "line": "Willingness to follow intuition, even when others doubt you."
@@ -929,7 +858,6 @@ export const ARCHETYPES: Archetype[] = [
   {
     "id": "networker",
     "name": "Networker",
-    "family": "Creative",
     "light": {
       "tag": "Connection",
       "line": "Enhances unity through the sharing of information. Engenders social awareness and empathy."
@@ -942,7 +870,6 @@ export const ARCHETYPES: Archetype[] = [
   {
     "id": "student",
     "name": "Student",
-    "family": "Intellectual",
     "light": {
       "tag": "Openness",
       "line": "Humility and devotion to knowledge. Openness to lifelong learning."
@@ -955,7 +882,6 @@ export const ARCHETYPES: Archetype[] = [
   {
     "id": "prince",
     "name": "Prince",
-    "family": "Masculine",
     "light": {
       "tag": "Promise",
       "line": "Romantic charm and potential for power."

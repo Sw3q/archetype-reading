@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { motion, useMotionValue } from 'framer-motion'
 import type { Archetype } from '../types'
 import { ARCHETYPES } from '../data/archetypes'
-import { FAMILY_COLOR } from '../lib/family'
+import { ACCENT } from '../lib/accent'
 import { exportNodeAsPng } from '../lib/exportImage'
 import { buildPrompt, type PromptStack } from '../lib/buildPrompt'
 import { OrnamentRule } from './StageLayout'
@@ -373,9 +373,7 @@ function ArchetypeSearch({
     const q = query.trim().toLowerCase()
     if (!q) return []
     return ARCHETYPES.filter(
-      (a) =>
-        !seatedIds.has(a.id) &&
-        (a.name.toLowerCase().includes(q) || a.family.toLowerCase().includes(q)),
+      (a) => !seatedIds.has(a.id) && a.name.toLowerCase().includes(q),
     ).slice(0, 7)
   }, [query, seatedIds])
 
@@ -395,7 +393,7 @@ function ArchetypeSearch({
           if (e.key === 'Enter' && matches[0]) add(matches[0])
           if (e.key === 'Escape') setQuery('')
         }}
-        placeholder="Search the deck — name or family — then press Enter to seat…"
+        placeholder="Search the deck by name — then press Enter to seat…"
         aria-label="Search archetypes"
         className="w-full border border-gold/30 bg-ink/70 px-4 py-2.5 font-body text-[15px] text-ivory transition outline-none placeholder:text-ivory/35 focus:border-gold/60"
       />
@@ -405,20 +403,14 @@ function ArchetypeSearch({
             <li key={a.id}>
               <button
                 onClick={() => add(a)}
-                className="flex w-full items-baseline gap-2.5 px-4 py-2 text-left transition hover:bg-gold/10"
+                className="flex w-full items-center gap-2.5 px-4 py-2 text-left transition hover:bg-gold/10"
               >
                 <span
                   aria-hidden
-                  className="block h-1.5 w-1.5 shrink-0 translate-y-[-1px] rotate-45"
-                  style={{ background: FAMILY_COLOR[a.family] }}
+                  className="block h-1.5 w-1.5 shrink-0 rotate-45"
+                  style={{ background: ACCENT }}
                 />
                 <span className="font-body text-[15px] text-ivory">{a.name}</span>
-                <span
-                  className="font-display ml-auto text-[9px] tracking-[0.25em] uppercase"
-                  style={{ color: FAMILY_COLOR[a.family] }}
-                >
-                  {a.family}
-                </span>
               </button>
             </li>
           ))}
@@ -906,7 +898,7 @@ function SeatToken({
       <div className="flex flex-col items-center">
         {seat.cards.map((cardId, i) => {
           const a = byId.get(cardId)!
-          const cardAccent = FAMILY_COLOR[a.family]
+          const cardAccent = ACCENT
           const isPrimary = i === 0
           return (
             <div

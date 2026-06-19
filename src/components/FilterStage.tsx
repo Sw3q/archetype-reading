@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import type { Archetype } from '../types'
-import { FAMILY_COLOR } from '../lib/family'
+import { ACCENT } from '../lib/accent'
 import { StageLayout, OrnamentRule } from './StageLayout'
 import { SwipeStack } from './SwipeStack'
 
@@ -74,7 +74,7 @@ export function FilterStage({ cards, onComplete }: FilterStageProps) {
             innately you.
           </p>
           {phase.noProgress && (
-            <p className="border border-fam-creative/40 px-5 py-2.5 font-body text-[13px] text-fam-creative/90 italic">
+            <p className="border border-gold/40 px-5 py-2.5 font-body text-[13px] text-gold-bright/90 italic">
               You kept them all. Be ruthless this round — which could you truly never
               switch off?
             </p>
@@ -170,7 +170,6 @@ function Chip({
   disabled?: boolean
   onClick?: () => void
 }) {
-  const accent = FAMILY_COLOR[archetype.family]
   return (
     <button
       onClick={onClick}
@@ -179,9 +178,9 @@ function Chip({
         disabled ? 'cursor-default' : 'hover:scale-105 active:scale-95'
       }`}
       style={{
-        borderColor: selected ? `${accent}cc` : 'rgba(201,163,90,0.25)',
-        background: selected ? `${accent}1f` : 'transparent',
-        color: selected ? accent : 'rgba(233,225,205,0.65)',
+        borderColor: selected ? `${ACCENT}cc` : 'rgba(201,163,90,0.25)',
+        background: selected ? `${ACCENT}1f` : 'transparent',
+        color: selected ? ACCENT : 'rgba(233,225,205,0.65)',
       }}
     >
       {archetype.name}

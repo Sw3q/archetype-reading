@@ -1,15 +1,3 @@
-export type ArchetypeFamily =
-  | 'Survival'
-  | 'Feminine'
-  | 'Masculine'
-  | 'Spiritual'
-  | 'Intellectual'
-  | 'Helper'
-  | 'Creative'
-  | 'Action'
-  | 'Shadow'
-  | 'Other'
-
 /** One pole of an archetype: a 1–3 word tag plus a short sentence. */
 export interface Aspect {
   tag: string
@@ -19,7 +7,6 @@ export interface Aspect {
 export interface Archetype {
   id: string
   name: string
-  family: ArchetypeFamily
   /** The gift / empowered expression. */
   light: Aspect
   /** The fear-based / distorted expression. */

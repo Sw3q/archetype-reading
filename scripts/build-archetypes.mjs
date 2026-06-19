@@ -1,6 +1,6 @@
 // Generates src/data/archetypes.ts from the curated deck in scripts/deck.json.
-// The deck is hand-authored (id, name, family, light/shadow), so there is no
-// PDF or external dependency — just run `npm run extract` after editing the JSON.
+// The deck is hand-authored (id, name, light/shadow), so there is no PDF or
+// external dependency — just run `npm run extract` after editing the JSON.
 import { readFileSync, writeFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, join, relative } from 'node:path'
@@ -9,18 +9,12 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 const deckPath = join(root, 'scripts', 'deck.json')
 const outPath = join(root, 'src', 'data', 'archetypes.ts')
 
-const FAMILIES = new Set([
-  'Survival', 'Feminine', 'Masculine', 'Spiritual', 'Intellectual',
-  'Helper', 'Creative', 'Action', 'Shadow', 'Other',
-])
-
 const deck = JSON.parse(readFileSync(deckPath, 'utf8'))
 const seen = new Set()
 for (const c of deck) {
-  if (!c.id || !c.name || !c.family) throw new Error(`Card missing id/name/family: ${JSON.stringify(c)}`)
+  if (!c.id || !c.name) throw new Error(`Card missing id/name: ${JSON.stringify(c)}`)
   if (seen.has(c.id)) throw new Error(`Duplicate id: ${c.id}`)
   seen.add(c.id)
-  if (!FAMILIES.has(c.family)) throw new Error(`Unknown family "${c.family}" for ${c.id}`)
   for (const pole of ['light', 'shadow']) {
     if (!c[pole]?.tag || !c[pole]?.line) throw new Error(`Card ${c.id} missing ${pole} tag/line`)
   }

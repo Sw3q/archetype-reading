@@ -134,13 +134,16 @@ omits all journey/shadow language.
 ## Data pipeline
 
 The deck is **hand-curated in `scripts/deck.json`** — an array of ~74 cards, each
-`{ id, name, family, light, shadow }` where `light`/`shadow` are `Aspect`s
+`{ id, name, light, shadow }` where `light`/`shadow` are `Aspect`s
 (`{ tag, line }`: a 1–3 word tag + a one-to-two-sentence definition). `scripts/build-archetypes.mjs`
-(`npm run extract`) validates the deck (unique ids, known families, both poles present)
-and writes it to `src/data/archetypes.ts` — a typed `Archetype[]` the app imports at build
-time. It's a pure Node JSON→TS transform: **no PDF, no python, no dependencies.** To change
-the deck (wording, add/remove a card, re-family), edit `deck.json` and re-run `npm run extract`.
-**`archetypes.ts` is generated — don't hand-edit the output.**
+(`npm run extract`) validates the deck (unique ids, both poles present) and writes it to
+`src/data/archetypes.ts` — a typed `Archetype[]` the app imports at build time. It's a pure
+Node JSON→TS transform: **no PDF, no python, no dependencies.** To change the deck (wording,
+add/remove a card), edit `deck.json` and re-run `npm run extract`. **`archetypes.ts` is
+generated — don't hand-edit the output.**
+
+There is no family/category taxonomy — every card uses the single gold `ACCENT`
+(`src/lib/accent.ts`).
 
 (History: the deck was originally scraped from Myss's *Gallery of Archetypes* PDF via a
 python/pypdf script; that was replaced once the content became a bespoke 74-card set with
@@ -154,8 +157,7 @@ grounds (`ink`/`panel`), gold-leaf accents (`gold`/`gold-bright`/`gold-dim`), iv
 and a recurring sun/moon duality — gold always means "claimed/innate", silver-ash means
 "set aside/learned". Reusable pieces live in `index.css` (`.tarot-frame` double hairline
 with corner dots, `.gold-foil` text, `.btn-gold`/`.btn-ghost`, `.rise` entrance) and
-`StageLayout.OrnamentRule`. Per-family accent colors (antiqued jewel tones) are defined in
-two places that must stay in sync: the `--color-fam-*` tokens in `index.css` and the
-`FAMILY_COLOR` map in `src/lib/family.ts` (the latter is what components actually read).
+`StageLayout.OrnamentRule`. There are no per-card accent colors — everything reads gold
+(`src/lib/accent.ts`'s `ACCENT`, matching the `gold*` theme tokens).
 Fonts (Cinzel display caps, Cormorant Garamond card names, EB Garamond body) load from
 Google Fonts in `index.html`.

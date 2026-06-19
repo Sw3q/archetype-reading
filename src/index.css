@@ -19,17 +19,6 @@
   /* Ink & paper. */
   --color-ivory: #e9e1cd;
   --color-ash: #8f8a7c;
-
-  /* Archetype families — antiqued jewel tones (mirrored in src/lib/family.ts). */
-  --color-fam-survival: #b25a42;
-  --color-fam-feminine: #b06179;
-  --color-fam-masculine: #5d7fb7;
-  --color-fam-spiritual: #9a72c4;
-  --color-fam-intellectual: #4a9a9c;
-  --color-fam-helper: #5aa276;
-  --color-fam-creative: #c79a3e;
-  --color-fam-action: #b85048;
-  --color-fam-shadow: #8d8a80;
 }
 
 :root {

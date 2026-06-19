@@ -1,5 +1,4 @@
 import type { Archetype, Aspect } from '../types'
-import { FAMILY_COLOR } from '../lib/family'
 
 /** One pole (Light / Shadow): celestial glyph, small-caps label, tag + line. */
 function AspectRow({
@@ -64,7 +63,6 @@ interface CardProps {
  * `image`, it replaces the medallion panel.
  */
 export function Card({ archetype, hint, className = '' }: CardProps) {
-  const accent = FAMILY_COLOR[archetype.family]
   return (
     <div
       className={`tarot-frame relative flex h-full w-full flex-col overflow-hidden bg-gradient-to-b from-panel to-ink-2 ${className}`}
@@ -83,13 +81,7 @@ export function Card({ archetype, hint, className = '' }: CardProps) {
       </div>
 
       {/* Text content */}
-      <div className="flex flex-1 flex-col gap-2.5 px-6 pt-1 pb-5 text-center">
-        <p
-          className="font-display text-[10px] font-medium tracking-[0.34em] uppercase"
-          style={{ color: accent }}
-        >
-          {archetype.family}
-        </p>
+      <div className="flex flex-1 flex-col gap-2.5 px-6 pt-3 pb-5 text-center">
         <h2 className="font-card mx-auto max-w-[260px] text-[1.85rem] leading-[1.05] font-semibold text-ivory">
           {archetype.name}
         </h2>
